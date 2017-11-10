@@ -1,0 +1,4 @@
+
+*.pyc
+rec.txt
+*.txt.gz

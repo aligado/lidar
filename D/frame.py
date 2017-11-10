@@ -8,7 +8,7 @@
 import time
 import math
 from file_handle import FileHandle
-from mtools import queue, height_queue, hexstr2int, AllConfig, PI
+from mtools import queue, frame_info_queue, hexstr2int, AllConfig, PI, error_frame
 
 
 def get_frame_info(frame):
@@ -20,30 +20,47 @@ def get_frame_info(frame):
         """
         frameinfo object
         """
+
         def __init__(self):
-            self.result = [] * 12
+            self.result = [0] * 12
             self.index = 0
 
         def insert_point(self, x, y):
-            if x < AllConfig.lane_min[index]:
+            index = 0
+            for index in range(0, AllConfig.lane_num):
+                # print index
+                # print AllConfig.lane_min[index], AllConfig.lane_max[index]
+                if (x >= AllConfig.lane_min[index]) and (x <= AllConfig.lane_max[index]):
+                    # print 'index', index
+                    self.result[index * 2] = max(self.result[index * 2], y)
+                    self.result[index * 2 + 1] += 1
+                    break
+        '''
+        def insert_point(self, x, y):
+            if x < AllConfig.lane_min[self.index]:
                 return True
-            while index < AllConfig.lane_num and x > AllConfig.lane_max[index]:
-                index += 1
-            if index == AllConfig.lane_num:
+            while self.index < AllConfig.lane_num and x > AllConfig.lane_max[self.index]:
+                self.index += 1
+            if self.index == AllConfig.lane_num:
                 return False
-            self.result[index * 2] = max(self.result[index * 2], y)
-            self.result[index * 2 + 1] += 1
+            print 'index', self.index
+            self.result[self.index * 2] = max(self.result[self.index * 2], y)
+            self.result[self.index * 2 + 1] += 1
+        '''
 
     i = 0
     frame_info = FrameInfo()
+    temp_pi = PI / 180.0
     for value in frame:
-        angle = (i * AllConfig.lidar_resolution + 0) * PI / 180
+        angle = (i * AllConfig.lidar_resolution + 0) * temp_pi
         i += 1
         vle = hexstr2int(value) / 10.0
         temp_x = int(math.cos(angle) * vle)
         temp_y = int(AllConfig.lidar_height - math.sin(angle) * vle)
-        if temp_y < AllConfig.threshold:
+        if temp_y < AllConfig.car_threshold:
             continue
+
+        # print "insert point", temp_x, temp_y
         frame_info.insert_point(temp_x, temp_y)
 
     print 'result ', frame_info.result
@@ -58,7 +75,9 @@ def process_frame(ar):
     # file_handle = FileHandle()
     frame_cnt = 0
     while True:
-        print 'queuesize', queue.qsize(), 'frame_cnt', frame_cnt
+        global error_frame
+        for temp_i in range(0, 6):
+            print 'queuesize', queue.qsize(), 'frame_cnt', frame_cnt, 'error frame', error_frame
         # 处理queue队列中留存的所有扫描数据
         while not queue.empty():
             buf = queue.get()
@@ -66,19 +85,22 @@ def process_frame(ar):
             buf_split = buf.split()
             buf_split_len = len(buf_split)
             if buf[0] != '\x02' or buf_split_len < 26:
+                error_frame += 1
                 print "Erro frame"
                 continue
 
             frame_cnt += 1
             point_num = min(hexstr2int(buf_split[25]), buf_split_len - 26)
+            # print 'point_num', point_num
 
             # print buf_split[9], buf_split[10], process_frame(buf_split[26:26+point_num])
             result_data = buf_split[9] + ' ' + \
                 get_frame_info(buf_split[26:26 + point_num])
-            #result_data = process_frame(buf_split[26:26+proint_num])
+            # result_data = process_frame(buf_split[26:26+proint_num])
             # file_handle.write(result_data + '\n')
+            # return
         if ar[0] == 0:
-            break
+            return
         time.sleep(0.1)
 
 

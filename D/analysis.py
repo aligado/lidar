@@ -8,13 +8,14 @@
 import time
 import math
 from file_handle import FileHandle
-from mtools import queue, height_queue, hexstr2int, AllConfig, PI
+from mtools import queue, frame_info_queue, hexstr2int, AllConfig, PI
 
 
 class CarInfo(object):
     """
     frameinfo object
     """
+
     def __init__(self):
         self.info_list = []
         self.under_threshold_num = 0
@@ -27,9 +28,15 @@ class CarInfo(object):
             self.car_analysis(self.info_list)
             self.info_list = []
             self.under_threshold_num = 0
-    
+
     def car_analysis(self, info_list):
-        pass
+        info_len = len(info_list)
+        begin = 0
+        end = info_len - AllConfig.car_threshold_num
+        while info_list[begin] < AllConfig.car_threshold:
+            begin += 1
+        info_list = info_list[begin, end]
+
 
 def process_frame_info(ar):
     """
@@ -48,8 +55,8 @@ def process_frame_info(ar):
             frame_info = frame_info_queue.get()
             # print buf
             for index in range(0, 6):
-                car_info[index].insert(frame_info[index*2],
-                                       frame_info[index*2+1])
+                car_info[index].insert(frame_info[index * 2],
+                                       frame_info[index * 2 + 1])
         if ar[0] == 0:
             break
         time.sleep(0.1)

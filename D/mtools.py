@@ -29,6 +29,7 @@ def hexstr2int(hex_int):
 
 class AllConfig(object):
     lane_min = [0]*6
+    lane_num = 6
     lane_max = [0]*6
     lidar_height = 800
     lidar_hz = 25
@@ -39,13 +40,14 @@ class AllConfig(object):
     host = '192.168.0.1'
     port = 2111
     bufsize = 2048
-    threshold = 60
+    car_threshold = 60
 
     @staticmethod
     def read_config_file(path="lidar.conf"):
         temp_conf = load_config("lidar.conf")
         #print temp_conf
         AllConfig.lane_max = temp_conf['lane_max']
+        AllConfig.lane_num = temp_conf['lane_num']
         AllConfig.lane_min = temp_conf['lane_min']
         AllConfig.lidar_start_angle = temp_conf['lidar_start_angle']
         AllConfig.lidar_end_angle = temp_conf['lidar_end_angle']
@@ -57,11 +59,12 @@ class AllConfig(object):
         AllConfig.port = temp_conf['port']
         AllConfig.ftp_path = temp_conf['ftppath']
         AllConfig.bufsize = temp_conf['bufsize']
-        AllConfig.threshold = temp_conf['threshold']
+        AllConfig.car_threshold = temp_conf['car_threshold']
         print AllConfig.__dict__
 
 queue = Queue()
-height_queue = Queue()
+frame_info_queue = Queue()
+error_frame = 0
 PI = 3.1415926
 
 def test(args):
