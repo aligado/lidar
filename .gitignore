@@ -2,3 +2,4 @@
 *.pyc
 rec.txt
 *.txt.gz
+tool/txt/*
