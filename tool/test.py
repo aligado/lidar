@@ -10,7 +10,7 @@ line = []
 
 fig2 = plt.figure('2')  
 # ax2 = fig2.add_subplot(1,1,1,xlim=(0, 2), ylim=(-4, 4))
-ax2 = fig2.add_subplot(1,1,1,xlim=(-1200, 1200), ylim=(-8, 8))
+ax2 = fig2.add_subplot(1,1,1,xlim=(-2000, 2000), ylim=(-800, 800))
 line2, = ax2.plot([], [], lw=2)
 
 for index in range(0, 6):
@@ -50,15 +50,17 @@ def process_data(buf):
     for i in range(26, 26 + len):
         # print i-25,' ',temp_ss[i]
         angle = ((i - 26) * 0.5 + 0) * 3.1415926 / 180
-        vle = hex2int(temp_ss[i]) / 1000.0
+        vle = hex2int(temp_ss[i]) / 10.0
+        if vle == 0:
+            vle = 1200
         xdata.append(np.cos(angle) * vle)
         ydata.append(np.sin(angle) * vle)
     return xdata, ydata
 
-fp = open('txt/20171108101000.txt', 'r+')
+fp = open('txt/20171120083047.txt', 'r+')
 log_lines = fp.readlines()
 fp.close()
-for i in range(50):
+for i in range(5000):
     x = np.linspace(0, 2, 100)     
     y = np.sin(2 * np.pi * (x - 0.01 * i))    
     for index in range(0, 6):
@@ -67,7 +69,7 @@ for i in range(50):
     lx, ly = process_data(log_lines[i])
     line2.set_data(lx, ly)    
     ax2.legend()
-    plt.pause(0.5)
+    plt.pause(100000)
 
 '''
 fig2 = plt.figure('2')  
