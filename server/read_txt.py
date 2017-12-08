@@ -22,7 +22,7 @@ def process_data(buf):
     if buf_len < 26:
         return [], []
     num_len = hex2int(buf[25])
-    print 'len ', num_len
+    print('len ', num_len)
     end = min(26+num_len, buf_len)
     height = [6666]*6
     for i in range(26, end):
@@ -48,6 +48,7 @@ def process_data(buf):
             if temp_x >= -1200+lane_index*400 and temp_x <= -1200+(lane_index+1)*400:
                 if temp_y>50 and temp_y < height[lane_index]:
                     height[lane_index] = temp_y
+
     return xdata, ydata, height
 
 # fp = open('txt/20171120083047.txt', 'r+')
@@ -60,7 +61,7 @@ index = 0
 
 def read_frame(oo=0):
     global index
-    print 'index', index
+    print('index', index)
     if index > len(log_lines)-1 or index < -1:
         index = 0
     log_line = log_lines[index].split()
@@ -80,15 +81,16 @@ def read_frame(oo=0):
         return {'x': [], 'y': [], 'height': [], 'widh': []}
 
     lx, ly, height = process_data(frame)
+
     return {'x': lx, 'y': ly, 'height': height}
 
 def read():
     for i in range(len(log_lines)):
-        print 'index', i
+        print('index', i)
         log_line = log_lines[i].split()
         frame = log_line
         if frame[0]!=begin_flag: # or frame[-1]!=end_flag:
-            print frame[0]
+            print(frame[0])
             continue
         lx, ly = process_data(frame)
         '''

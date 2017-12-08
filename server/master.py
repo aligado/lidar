@@ -20,7 +20,7 @@ def list():
         data = frame_queue.get()
     '''
     #print data
-    print data['height']
+    print(data['height'])
     return jsonify({'code': 20000, 'data': data})
 
 def init():
