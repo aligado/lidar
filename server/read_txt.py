@@ -2,6 +2,7 @@ import math
 import time
 from ctypes import c_int32
 from multiprocessing import Queue
+from analysis import CarInfo
 # from matplotlib import pyplot as plt     
 
 '''
@@ -11,6 +12,15 @@ line, = ax.plot([], [], lw=2)
 '''
 
 frame_queue = Queue()
+car_info = [None]*6
+for index in range(0, 6):
+    car_info[index] = CarInfo(index)
+car_info[0].horizon_line = 594
+car_info[1].horizon_line = 573
+car_info[2].horizon_line = 574
+car_info[3].horizon_line = 604
+car_info[4].horizon_line = 481
+car_info[5].horizon_line = 630
 
 def hex2int(hex_int):
     return c_int32(int(hex_int, 16)).value
@@ -48,11 +58,18 @@ def process_data(buf):
             if temp_x >= -1200+lane_index*400 and temp_x <= -1200+(lane_index+1)*400:
                 if temp_y>50 and temp_y < height[lane_index]:
                     height[lane_index] = temp_y
-
-    return xdata, ydata, height
+        
+    analysis_list = ['null']*6 
+    for lane_index in range(0, 6):
+        analysis_list[lane_index] = car_info[lane_index].insert_frame_info(height[lane_index])
+    '''
+    lane_index = 2
+    analysis_list[lane_index] = car_info[lane_index].insert_frame_info(height[lane_index])
+    '''
+    return xdata, ydata, height, analysis_list
 
 # fp = open('txt/20171120083047.txt', 'r+')
-fp = open('txt/20171108141511.txt', 'r+')
+fp = open('txt/20171203164659.txt', 'r+')
 begin_flag = 'sSN'
 end_flag = '0'
 log_lines = fp.readlines()
@@ -80,9 +97,9 @@ def read_frame(oo=0):
         index += 1
         return {'x': [], 'y': [], 'height': [], 'widh': []}
 
-    lx, ly, height = process_data(frame)
+    lx, ly, height, analysis_list = process_data(frame)
 
-    return {'x': lx, 'y': ly, 'height': height}
+    return {'x': lx, 'y': ly, 'height': height, 'analysis': analysis_list}
 
 def read():
     for i in range(len(log_lines)):

@@ -7,38 +7,48 @@
 
 import time
 import math
-from file_handle import FileHandle
-from mtools import queue, frame_info_queue, hexstr2int, AllConfig, PI
 
 
 class CarInfo(object):
     """
     frameinfo object
     """
-    threshold_num = 0
-    threshold_height = 0
+    threshold_num = 5
+    threshold_height = 10
 
-    def __init__(self):
+    def __init__(self, id):
         self.info_list = []
         self.horizon_line = 0
         self.under_cnt = 0
+        self.id = id
 
     def insert_frame_info(self, height, width=0):
+        height = self.horizon_line - height
         self.info_list.append(height)
+        print('insert ', height)
+        print('insert ', self.info_list)
+        # print(height)
         if height < self.threshold_height:
             self.under_cnt += 1
             if self.under_cnt >= self.threshold_num:
-                self.car_analysis(self.info_list)
+                res = self.car_analysis(self.info_list)
                 self.info_list = []
                 self.under_cnt = 0
+                return res
+        else:
+            self.under_cnt = 0
+        return 'null'
 
     def car_analysis(self, info_list):
+        print('id info_list', self.id, info_list)
         info_len = len(info_list)
+        # return
         begin = 0
         end = info_len - self.threshold_num
-        while info_list[begin] < self.threshold_height and begin<info_len:
+        while begin<info_len and info_list[begin] < self.threshold_height:
             begin += 1
-        if begin+20 < end:
+        print('begin end', begin, end)
+        if begin+self.threshold_num < end:
             info_list = info_list[begin:end]
             info_len = len(info_list)
             average_height = 0
@@ -47,6 +57,16 @@ class CarInfo(object):
                 average_height += height
                 max_height = max(max_height, height)
             average_height /= info_len
+            print('average_height', average_height)
+            print('analysis_list', info_list)
+            print('revolution', end-begin)
+            return {
+                'average_height': average_height,
+                'info_list': info_list,
+                'revolution': end-begin,
+            }
+        return 'null'
+
 
     def analysis_height(self, info_list):
         pass

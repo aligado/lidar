@@ -11,6 +11,20 @@
           <canvas id="cv2" class="cv" width="300" height="150">
               Your browser does not support the canvas element.
           </canvas>
+          <div class="info">
+            cv0
+            {{analysis0}}
+          </div>
+          <div class="info">
+            cv1
+            {{analysis1}}
+          </div>
+          <div class="info">
+            cv2
+            {{analysis2}}
+          </div>
+          <div class="clear">
+          </div>
           <canvas id="cv3" class="cv" width="300" height="150">
               Your browser does not support the canvas element.
           </canvas>
@@ -20,9 +34,26 @@
           <canvas id="cv5" class="cv" width="300" height="150">
               Your browser does not support the canvas element.
           </canvas>
+          <div class="info">
+            cv3
+            {{analysis3}}
+          </div>
+          <div class="info">
+            cv4
+            {{analysis4}}
+          </div>
+          <div class="info">
+            cv5
+            {{analysis5}}
+
+          </div>
+          <div class="clear">
+          </div>
           <canvas id="lidar" width="900" height="200">
               Your browser does not support the canvas element.
           </canvas>
+          <div class="clear">
+          </div>
       </div>
       <div class="play-control">
         <el-button-group>
@@ -49,6 +80,13 @@ export default {
       drawInterval: null,
       frame: null,
       height: [[], [], [], [], [], []],
+      analysis: ['null', 'null', 'null', 'null', 'null', 'null'],
+      analysis0: 'null',
+      analysis1: 'null',
+      analysis2: 'null',
+      analysis3: 'null',
+      analysis4: 'null',
+      analysis5: 'null',
       oo: 1,
     }
   },
@@ -60,6 +98,18 @@ export default {
       getLidar(this.oo).then(res => {
           // console.log(res.data)
           this.frame = res.data
+          console.log('this.frame.analysis', this.frame.analysis)
+          for (let i=0; i<6; i++) {
+            if (res.data.analysis[i].hasOwnProperty('info_list')) {
+              if (i==0) this.analysis0 = JSON.stringify(this.frame.analysis[i])
+              if (i==1) this.analysis1 = JSON.stringify(this.frame.analysis[i])
+              if (i==2) this.analysis2 = JSON.stringify(this.frame.analysis[i])
+              if (i==3) this.analysis3 = JSON.stringify(this.frame.analysis[i])
+              if (i==4) this.analysis4 = JSON.stringify(this.frame.analysis[i])
+              if (i==5) this.analysis5 = JSON.stringify(this.frame.analysis[i])
+            }
+          }
+          console.log('analysis', this.analysis)
           this.draw()
         },
         error =>{
@@ -69,7 +119,7 @@ export default {
     drawRule(ctx) {
       ctx.beginPath()
       const step = parseInt(ctx.canvas.width/32)
-      console.log(step)
+      // console.log(step)
       for (let i =0; i<ctx.canvas.width; i+=step) {
         ctx.moveTo(i, ctx.canvas.height);
         ctx.lineTo(i, ctx.canvas.height - 10);
@@ -108,7 +158,7 @@ export default {
     draw() {
       var canvas = document.getElementById('lidar');
       if (canvas.getContext) {
-          console.log('draw')
+          // console.log('draw')
           var ctx = canvas.getContext('2d');
           ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
           ctx.fillStyle = "red"
@@ -173,7 +223,7 @@ export default {
       clearInterval(this.drawInterval)
       this.drawInterval = setInterval(() => {
         this.play()
-        }, 30)
+        }, 50)
     }, 
     over() {
       clearInterval(this.drawInterval)
@@ -204,6 +254,17 @@ export default {
 .cv {
   float: left;
   border: 1px solid #c3c3c3;
+}
+.info {
+  float: left;
+  width: 302px;
+  border: 1px solid #c3c3c3;
+  word-wrap: break-word;
+}
+.clear {
+  height: 5px;
+  width: 1280px;
+  overflow: auto;
 }
 #lidar {
   float: left;
