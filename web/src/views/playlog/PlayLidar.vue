@@ -11,17 +11,19 @@
           <canvas id="cv2" class="cv" width="300" height="150">
               Your browser does not support the canvas element.
           </canvas>
-          <div class="info">
-            cv0
-            {{analysis0}}
-          </div>
-          <div class="info">
-            cv1
-            {{analysis1}}
-          </div>
-          <div class="info">
-            cv2
-            {{analysis2}}
+          <div>
+            <div class="info">
+              cv0
+              {{analysis0}}
+            </div>
+            <div class="info">
+              cv1
+              {{analysis1}}
+            </div>
+            <div class="info">
+              cv2
+              {{analysis2}}
+            </div>
           </div>
           <div class="clear">
           </div>
@@ -60,12 +62,12 @@
           <el-button type="primary" class="" @click="go(1)"><</el-button>
           <el-button type="primary" class="" @click="go(-1)">></el-button>
           <el-button type="primary" class="" @click="start">start</el-button>
+          <el-button type="primary" class="" @click="play">play</el-button>
           <el-button type="primary" class="" @click="over">pause</el-button>
         </el-button-group>
       </div>
     </div>
     <div class="play-right">
-      <pre> {1:234} </pre>
     </div>
   </div>
 </template>
@@ -95,8 +97,8 @@ export default {
       this.oo = oo
     },
     play() {
-      getLidar(this.oo).then(res => {
-          // console.log(res.data)
+      getLidar().then(res => {
+          console.log(res.data)
           this.frame = res.data
           console.log('this.frame.analysis', this.frame.analysis)
           for (let i=0; i<6; i++) {
@@ -275,6 +277,7 @@ export default {
   padding-top: 40px
 }
 .play-right {
+  float: left;
   width: 600px;
 }
 </style>

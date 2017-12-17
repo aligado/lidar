@@ -1,9 +1,8 @@
 import fetch from '@/utils/fetch'
 
-export function getLidar(oo) {
+export function getLidar() {
   return fetch({
-    url: '/list',
+    url: '/frame',
     method: 'get',
-    params: { oo }
   })
 }

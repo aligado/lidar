@@ -4,6 +4,6 @@ var prodEnv = require('./prod.env')
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
   // BASE_API: '"http://192.168.174.144:2222"', // api的base_url
-  BASE_API: '"http://127.0.0.1:2222"' // api的base_url
+  BASE_API: '"http://119.29.186.141:8080"' // api的base_url
   // BASE_API: '"https://easy-mock.com/mock/5950a2419adc231f356a6636/vue-admin"',
 })

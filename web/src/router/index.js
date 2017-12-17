@@ -30,10 +30,10 @@ export const constantRouterMap = [
     path: '/example',
     component: Layout,
     redirect: 'noredirect',
-    name: 'Example',
+    name: 'Config',
     icon: 'zujian',
     children: [
-      { path: 'index', name: 'Form', icon: 'zonghe', component: _import('page/form') }
+      { path: 'index', name: 'main', icon: 'zonghe', component: _import('page/form') }
     ]
   },
 
@@ -43,16 +43,15 @@ export const constantRouterMap = [
     redirect: 'noredirect',
     icon: 'tubiao',
     noDropdown: true,
-    children: [{ path: 'index', name: 'logTable', component: _import('logtable/index') }]
+    children: [{ path: 'index', name: 'View', component: _import('logtable/index') }]
   },
-
   {
     path: '/test',
     component: Layout,
     icon: 'tubiao',
     redirect: 'noredirect',
     noDropdown: true,
-    children: [{ path: 'index', name: 'playLog', component: _import('playlog/PlayLidar') }]
+    children: [{ path: 'index', name: 'Dev', component: _import('playlog/PlayLidar') }]
   },
 
   { path: '*', redirect: '/404', hidden: true }

@@ -11,63 +11,52 @@ from file_handle import FileHandle
 from mtools import queue, frame_info_queue, hexstr2int, AllConfig, PI
 
 
-class CarInfo(object):
-    """
-    frameinfo object
-    """
-
-    def __init__(self):
-        self.info_list = []
-        self.under_threshold_num = 0
-
-    def insert_frame_info(self, height, width):
-        self.info_list.append((height, width))
-        if width < AllConfig.car_threshold:
-            self.under_threshold_num += 1
-        if self.under_threshold_num >= AllConfig.car_threshold_num:
-            self.car_analysis(self.info_list)
-            self.info_list = []
-            self.under_threshold_num = 0
-
-    def car_analysis(self, info_list):
-        info_len = len(info_list)
-        begin = 0
-        end = info_len - AllConfig.car_threshold_num
-        while info_list[begin] < AllConfig.car_threshold:
-            begin += 1
-        info_list = info_list[begin, end]
-
-
-def process_frame_info(ar):
-    """
-    处理帧信息
-    """
-    # file_handle = FileHandle()
-    # frame_cnt = 0
-    car_info = []
-    for index in range(0, 6):
-        car_info.append(CarInfo())
-
+def car_analysis(ar, car_queue, web_car_queue):
     while True:
-        # print 'queuesize', queue.qsize(), 'frame_cnt', frame_cnt
-        # 处理frame info queue队列中留存的所有扫描数据
-        while not frame_info_queue.empty():
-            frame_info = frame_info_queue.get()
-            # print buf
-            for index in range(0, 6):
-                car_info[index].insert(frame_info[index * 2],
-                                       frame_info[index * 2 + 1])
         if ar[0] == 0:
-            break
+            print 'close car analysis'
+            return
+        # print 'car_analysis'
+        while not car_queue.empty():
+            if ar[0] == 0:
+                print 'close car analysis'
+                return
+            # print 'car_analysis'
+            temp = car_queue.get()
+            print 'car info', temp
+            info_list = temp['info_list']
+            lane_id = temp['id']
+            info_len = len(info_list)
+            average_height = 0
+            max_height = 0
+            for height in info_list:
+                average_height += height
+                max_height = max(max_height, height)
+            average_height /= info_len
+            
+            average_q = 0
+            for height in info_list:
+                average_q += (height-average_height)*(height-average_height)
+            average_q = int(math.sqrt(average_q))
+
+            '''
+            print'average_height', average_height
+            print'average_q', average_q
+            print'analysis_list', info_list
+            print'revolution', info_len
+            print'lane id', lane_id
+            '''
+            car_res = {
+                'info_list': info_list,
+                'average_height': average_height,
+                'revolution': info_len,
+                'lane id': lane_id,
+                'max_height': max_height,
+                'average_q': average_q
+            }
+            web_car_queue.put(car_res)
+            print car_res
         time.sleep(0.1)
-
-
-def unittest(args):
-    """
-    单元测试
-    """
-    return 0
-
 
 if __name__ == '__main__':
     import sys

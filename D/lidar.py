@@ -10,8 +10,9 @@ import socket
 import time
 import sys
 import gzip
-from multiprocessing import Process, Array, Value
+from multiprocessing import Process, Array
 from mtools import hexstr2int, queue, AllConfig
+from frame import process_frame
 from datetime import datetime
 
 __author__ = 'alpc32'
@@ -43,8 +44,6 @@ class LidarHandle(object):
         buf = self.s.recv(1024)
         print 'buf', buf
         temp_ss = buf.split()
-        if len(temp_ss) < 7:
-            return
         self.frequency = hexstr2int(temp_ss[2])/100
         self.resolution = hexstr2int(temp_ss[4])*1.0/10000.0
         # self.start_angle = 0
@@ -73,7 +72,6 @@ class LidarHandle(object):
         """
         self.s.send("sEN LMDscandata 1")
         while True:
-            # print "lidar process"
             if ar[0] == 0:
                 print "get exit cmd"
                 return
@@ -227,7 +225,7 @@ def record_lidar_frame():
     record_process = Process(target=print_queue, args=(scan_flag, ))
     record_process.start()
 
-    time.sleep(3600)
+    time.sleep(3600*3)
     lidar.close_scandata1(scan_flag)
     time.sleep(3)
 

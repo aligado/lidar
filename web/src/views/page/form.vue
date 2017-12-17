@@ -1,47 +1,28 @@
 <template>
   <div class="app-container">
-    <el-form ref="form" :model="form" label-width="120px">
-      <el-form-item label="Activity name">
-        <el-input v-model="form.name"></el-input>
+    <el-form ref="form" :model="form" label-width="200px">
+      <el-form-item label="雷达ID">
+        <el-input v-model="form.id"></el-input>
       </el-form-item>
-      <el-form-item label="Activity zone">
-        <el-select v-model="form.region" placeholder="please select your zone">
-          <el-option label="Zone one" value="shanghai"></el-option>
-          <el-option label="Zone two" value="beijing"></el-option>
-        </el-select>
       </el-form-item>
-      <el-form-item label="Activity time">
+      <el-form-item label="雷达高度">
+        <el-input v-model="form.height"></el-input>
+      </el-form-item>
+      <el-form-item v-for="index in range" :key="index" :label="'车道'+(index+1)">
         <el-col :span="11">
-          <el-date-picker type="date" placeholder="Pick a date" v-model="form.date1" style="width: 100%;"></el-date-picker>
+          <el-input v-model.number="form.lane_min[index]"></el-input>
         </el-col>
-        <el-col class="line" :span="2">-</el-col>
+        <el-col class="line" :span="2">- </el-col>
         <el-col :span="11">
-          <el-time-picker type="fixed-time" placeholder="Pick a time" v-model="form.date2" style="width: 100%;"></el-time-picker>
+          <el-input v-model.number="form.lane_max[index]"></el-input>
         </el-col>
       </el-form-item>
-      <el-form-item label="Instant delivery">
-        <el-switch on-text="" off-text="" v-model="form.delivery"></el-switch>
-      </el-form-item>
-      <el-form-item label="Activity type">
-        <el-checkbox-group v-model="form.type">
-          <el-checkbox label="Online activities" name="type"></el-checkbox>
-          <el-checkbox label="Promotion activities" name="type"></el-checkbox>
-          <el-checkbox label="Offline activities" name="type"></el-checkbox>
-          <el-checkbox label="Simple brand exposure" name="type"></el-checkbox>
-        </el-checkbox-group>
-      </el-form-item>
-      <el-form-item label="Resources">
-        <el-radio-group v-model="form.resource">
-          <el-radio label="Sponsor"></el-radio>
-          <el-radio label="Venue"></el-radio>
-        </el-radio-group>
-      </el-form-item>
-      <el-form-item label="Activity form">
+      <el-form-item label="备注">
         <el-input type="textarea" v-model="form.desc"></el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="onSubmit">Create</el-button>
-        <el-button>Cancel</el-button>
+        <el-button type="primary" @click="cancel">保存</el-button>
+        <el-button @click="cancel">取消</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -51,21 +32,24 @@
 export default {
   data() {
     return {
+      range: [0, 1, 2, 3, 4, 5],
       form: {
-        name: '',
-        region: '',
-        date1: '',
-        date2: '',
-        delivery: false,
-        type: [],
-        resource: '',
+        id: 'hello wrold',
+        height: 0,
+        lane_min: [-1199, -800, -400, 0, 400, 800],
+        lane_max: [-800, -400, 0, 400, 800, 1200],
         desc: ''
-      }
+      },
+      formCopy: null
     }
   },
+  mounted() {
+    this.formCopy = JSON.parse(JSON.stringify(this.form))
+  },
   methods: {
-    onSubmit() {
-      this.$message('submit!')
+    cancel() {
+      console.log(this.form)
+      this.form = JSON.parse(JSON.stringify(this.formCopy))
     }
   }
 }

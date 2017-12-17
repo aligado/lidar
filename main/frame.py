@@ -10,97 +10,179 @@ import math
 from file_handle import FileHandle
 from mtools import queue, frame_info_queue, hexstr2int, AllConfig, PI, error_frame
 
+PI = 3.1415926
 
-def get_frame_info(frame):
+hex2int = hexstr2int
+
+class CarInfo(object):
+    """
+    frameinfo object
+    """
+    threshold_num = 5
+    threshold_height = 12
+
+    def __init__(self, id):
+        self.info_list = []
+        self.horizon_line = 0
+        self.under_cnt = 0
+        self.id = id
+
+    def insert_frame_info(self, height, width=0):
+        height = self.horizon_line - height
+        self.info_list.append(height)
+        '''
+        print('insert', height)
+        print('insert', self.info_list)
+        '''
+        # print(height)
+        if height < self.threshold_height:
+            self.under_cnt += 1
+            if self.under_cnt >= self.threshold_num:
+                res = self.car_analysis(self.info_list)
+                self.info_list = []
+                self.under_cnt = 0
+                return res
+        else:
+            self.under_cnt = 0
+        return 'null'
+
+    def car_analysis(self, info_list):
+        # print('id info_list', self.id, info_list)
+        info_len = len(info_list)
+        # return
+        begin = 0
+        end = info_len - self.threshold_num
+        while begin<info_len and info_list[begin] < self.threshold_height:
+            begin += 1
+        # print('begin end', begin, end)
+        if begin+self.threshold_num < end:
+            info_list = info_list[begin:end]
+            # info_len = len(info_list)
+            '''
+            average_height = 0
+            max_height = 0
+            for height in info_list:
+                average_height += height
+                max_height = max(max_height, height)
+            average_height /= info_len
+            ''
+            print('average_height', average_height)
+            print('analysis_list', info_list)
+            print('revolution', end-begin)
+            '''
+            return {
+                'id': self.id,
+                'info_list': info_list,
+            }
+        return 'null'
+
+def get_frame_info(buf, car_info):
     """
     获得每一帧的关键信息
     """
-
-    class FrameInfo(object):
-        """
-        frameinfo object
-        """
-
-        def __init__(self):
-            self.result = [0] * 12
-            self.index = 0
-
-        def insert_point(self, x, y):
-            index = 0
-            for index in range(0, AllConfig.lane_num):
-                # print index
-                # print AllConfig.lane_min[index], AllConfig.lane_max[index]
-                if (x >= AllConfig.lane_min[index]) and (x <= AllConfig.lane_max[index]):
-                    # print 'index', index
-                    self.result[index * 2] = max(self.result[index * 2], y)
-                    self.result[index * 2 + 1] += 1
-                    break
-        '''
-        def insert_point(self, x, y):
-            if x < AllConfig.lane_min[self.index]:
-                return True
-            while self.index < AllConfig.lane_num and x > AllConfig.lane_max[self.index]:
-                self.index += 1
-            if self.index == AllConfig.lane_num:
-                return False
-            print 'index', self.index
-            self.result[self.index * 2] = max(self.result[self.index * 2], y)
-            self.result[self.index * 2 + 1] += 1
-        '''
-
-    i = 0
-    frame_info = FrameInfo()
-    temp_pi = PI / 180.0
-    for value in frame:
-        angle = (i * AllConfig.lidar_resolution + 0) * temp_pi
-        i += 1
-        vle = hexstr2int(value) / 10.0
-        temp_x = int(math.cos(angle) * vle)
-        temp_y = int(AllConfig.lidar_height - math.sin(angle) * vle)
-        if temp_y < AllConfig.car_threshold:
-            continue
-
-        # print "insert point", temp_x, temp_y
-        frame_info.insert_point(temp_x, temp_y)
-
-    print 'result ', frame_info.result
-    frame_info_queue.put(frame_info.result)
-    return ' '.join(str(temp) for temp in frame_info.result)
+    xdata, ydata = [], []
+    buf_len = len(buf)
+    if buf_len < 26:
+        return [], []
+    num_len = hex2int(buf[25])
+    # print('len ', num_len)
+    end = min(26+num_len, buf_len)
+    height = [6666]*6
+    for i in range(26, end):
+        angle = ((i - 26) * 0.5 + 0) * PI / 180.0
+        vle = hex2int(buf[i]) / 10.0
+        if vle < 100:
+            vle = 0
+        temp_x = math.cos(angle) * vle
+        temp_y = math.sin(angle) * vle
+        if temp_x < -1600:
+            temp_x = -1600
+        elif temp_x > 1600:
+            temp_x = 1600
+        temp_x = int(temp_x)
+        if temp_y < 0:
+            temp_y = 0
+        elif temp_y > 800:
+            temp_y = 800
+        temp_y = int(temp_y)
+        xdata.append(temp_x)
+        ydata.append(temp_y)
+        for lane_index in range(0, 6):
+            if temp_x >= AllConfig.lane_min[lane_index] and temp_x <= AllConfig.lane_max[lane_index]:
+                if temp_y > 50 and temp_y < height[lane_index]:
+                    height[lane_index] = temp_y
+        
+    analysis_list = ['null']*6 
+    for lane_index in range(0, 6):
+        analysis_list[lane_index] = car_info[lane_index].insert_frame_info(height[lane_index])
+    return xdata, ydata, height, analysis_list
 
 
-def process_frame(ar):
+def read_frame(ar, queue, web_frame_queue, car_queue):
+    car_info = [None]*6
+    for index in range(0, 6):
+        car_info[index] = CarInfo(index)
+    '''
+    car_info[0].horizon_line = 594
+    car_info[1].horizon_line = 573
+    car_info[2].horizon_line = 574
+    car_info[3].horizon_line = 604
+    car_info[4].horizon_line = 481
+    car_info[5].horizon_line = 630
+    '''
+    car_info[0].horizon_line = 559
+    car_info[1].horizon_line = 371
+    car_info[2].horizon_line = 563
+    car_info[3].horizon_line = 605
+    car_info[4].horizon_line = 502
+    car_info[5].horizon_line = 650
     """
     处理雷达每帧数据
     """
     # file_handle = FileHandle()
     frame_cnt = 0
+    begin_flag = 'sSN'
+    end_flag = '0'
     while True:
-        global error_frame
-        for temp_i in range(0, 6):
-            print 'queuesize', queue.qsize(), 'frame_cnt', frame_cnt, 'error frame', error_frame
-        # 处理queue队列中留存的所有扫描数据
+        if ar[0] == 0:
+            print 'read_frame close'
+            return
+        # print 'read_frame process'
         while not queue.empty():
+            # print 'read_frame process'
+            if ar[0] == 0:
+                print 'read_frame close'
+                return
+            if queue.qsize < 2:
+                time.sleep(0.1)
+                continue
             buf = queue.get()
             # print buf
             buf_split = buf.split()
-            buf_split_len = len(buf_split)
-            if buf[0] != '\x02' or buf_split_len < 26:
-                error_frame += 1
-                print "Erro frame"
+            if len(buf_split) == 0:
                 continue
+            if buf_split[0] == begin_flag:
+                if buf_split[-1] != end_flag:
+                    next_buf_split = queue.get().split()
+                    if next_buf_split[-1] == end_flag:
+                        buf_split += next_buf_split
+            else:
+                continue
+            # print buf_split
+            xdata, ydata, height, analysis_data = get_frame_info(buf_split, car_info)
+            for temp in analysis_data:
+                if temp != 'null':
+                    car_queue.put(temp)
 
-            frame_cnt += 1
-            point_num = min(hexstr2int(buf_split[25]), buf_split_len - 26)
-            # print 'point_num', point_num
+            # if web_frame_queue.empty():
+            web_frame_queue.put([xdata, ydata, height, analysis_data])
+            '''
+            for i in range(0, len(xdata)):
+                print xdata[i], ydata[i]
+            print ''
+            '''
+            # print height
 
-            # print buf_split[9], buf_split[10], process_frame(buf_split[26:26+point_num])
-            result_data = buf_split[9] + ' ' + \
-                get_frame_info(buf_split[26:26 + point_num])
-            # result_data = process_frame(buf_split[26:26+proint_num])
-            # file_handle.write(result_data + '\n')
-            # return
-        if ar[0] == 0:
-            return
         time.sleep(0.1)
 
 
