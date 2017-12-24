@@ -3,6 +3,7 @@
 rec.txt
 *.txt.gz
 tool/txt/*
+data/*
 server/txt/*
 .DS_Store
 node_modules/
