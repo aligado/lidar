@@ -17,38 +17,44 @@ Vue.use(Router)
 **/
 export const constantRouterMap = [
   { path: '/404', component: _import('404'), hidden: true },
-
   {
-    path: '/view',
+    path: '/',
     component: Layout,
-    redirect: 'noredirect',
-    icon: 'tubiao',
-    noDropdown: true,
-    children: [{ path: 'index', name: '检测', component: _import('logtable/index') }]
+    redirect: '/dashboard',
+    name: 'Dashboard',
+    hidden: true,
+    children: [{ path: 'dashboard', component: _import('dashboard/index') }]
   },
 
   {
-    path: '/config',
+    path: '/example',
     component: Layout,
     redirect: 'noredirect',
     name: 'Config',
     icon: 'zujian',
-    noDropdown: true,
     children: [
-      { path: 'index', name: '配置', icon: 'zonghe', component: _import('page/form') }
+      { path: 'index', name: 'main', icon: 'zonghe', component: _import('page/form') }
     ]
   },
 
   {
-    path: '/dev',
+    path: '/table',
+    component: Layout,
+    redirect: 'noredirect',
+    icon: 'tubiao',
+    noDropdown: true,
+    children: [{ path: 'index', name: 'View', component: _import('logtable/index') }]
+  },
+  {
+    path: '/test',
     component: Layout,
     icon: 'tubiao',
     redirect: 'noredirect',
     noDropdown: true,
-    children: [{ path: 'index', name: '调试', component: _import('playlog/PlayLidar') }]
+    children: [{ path: 'index', name: 'Dev', component: _import('playlog/PlayLidar') }]
   },
 
-  { path: '*', redirect: '/view/index', hidden: true }
+  { path: '*', redirect: '/404', hidden: true }
 ]
 
 export default new Router({

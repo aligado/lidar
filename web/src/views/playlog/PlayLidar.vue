@@ -11,18 +11,19 @@
           <canvas id="cv2" class="cv" width="300" height="150">
               Your browser does not support the canvas element.
           </canvas>
-          <div class="info">
-            车道1
-            {{analysis0}}
-          </div>
-          <div class="info">
-            车道2
-            {{analysis1}}
-          </div>
-          <div class="info">
-            车道3
-            cv2
-            {{analysis2}}
+          <div>
+            <div class="info">
+              cv0
+              {{analysis0}}
+            </div>
+            <div class="info">
+              cv1
+              {{analysis1}}
+            </div>
+            <div class="info">
+              cv2
+              {{analysis2}}
+            </div>
           </div>
           <div class="clear">
           </div>
@@ -36,16 +37,17 @@
               Your browser does not support the canvas element.
           </canvas>
           <div class="info">
-            车道4
+            cv3
             {{analysis3}}
           </div>
           <div class="info">
-            车道5
+            cv4
             {{analysis4}}
           </div>
           <div class="info">
-            车道6
+            cv5
             {{analysis5}}
+
           </div>
           <div class="clear">
           </div>
@@ -57,55 +59,15 @@
       </div>
       <div class="play-control">
         <el-button-group>
-          <el-button type="primary" class="" @click="start">播放</el-button>
-          <el-button type="primary" class="" @click="play">单步</el-button>
-          <!--
+          <el-button type="primary" class="" @click="go(1)"><</el-button>
+          <el-button type="primary" class="" @click="go(-1)">></el-button>
           <el-button type="primary" class="" @click="start">start</el-button>
           <el-button type="primary" class="" @click="play">play</el-button>
           <el-button type="primary" class="" @click="over">pause</el-button>
-          -->
         </el-button-group>
       </div>
     </div>
     <div class="play-right">
-      <el-form ref="form" :model="form" label-width="80px">
-        <el-form-item label="雷达ID">
-          <el-input v-model="form.id"></el-input>
-        </el-form-item>
-        <el-form-item label="雷达高度">
-          <el-input v-model="form.height"></el-input>
-        </el-form-item>
-        <el-form-item label="补偿角度">
-          <el-input-number v-model="num8" controls-position="right" :min="-30" :max="30"></el-input-number>
-        </el-form-item>
-        <el-form-item v-for="index in range" :key="index" :label="'车道'+(index+1)">
-          <el-col :span="3">
-            min:
-          </el-col>
-          <el-col :span="5">
-            <el-input v-model.number="form.lane_min[index]"></el-input>
-          </el-col>
-          <el-col :span="3">
-            max:
-          </el-col>
-          <el-col :span="5">
-            <el-input v-model.number="form.lane_max[index]"></el-input>
-          </el-col>
-          <el-col :span="3">
-            hor:
-          </el-col>
-          <el-col :span="5">
-            <el-input v-model.number="form.lane_max[index]"></el-input>
-          </el-col>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input type="textarea" v-model="form.desc"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="cancel">保存</el-button>
-          <el-button @click="cancel">重置</el-button>
-        </el-form-item>
-      </el-form>
     </div>
   </div>
 </template>
@@ -117,16 +79,6 @@ let cnt = 0
 export default {
   data() {
     return {
-      range: [0, 1, 2, 3, 4, 5],
-      form: {
-        id: 'hello wrold',
-        height: 0,
-        lane_min: [-1199, -800, -400, 0, 400, 800],
-        lane_max: [-800, -400, 0, 400, 800, 1200],
-        desc: ''
-      },
-      num8: 0,
-      formCopy: null,
       drawInterval: null,
       frame: null,
       height: [[], [], [], [], [], []],
@@ -141,6 +93,9 @@ export default {
     }
   },
   methods: {
+    go(oo) {
+      this.oo = oo
+    },
     play() {
       getLidar().then(res => {
           console.log(res.data)
@@ -323,7 +278,7 @@ export default {
 }
 .play-right {
   float: left;
-  width: 400px
+  width: 600px;
 }
 </style>
 

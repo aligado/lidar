@@ -146,7 +146,6 @@ class Handle(object):
         cls.scan_flag[0] = 1
         cls.scandata1_process = Process(target=cls.lidar.open_scandata1,
                                         args=(cls.scan_flag, ))
-        cls.scandata1_process.daemon = True
         cls.scandata1_process.start()
     
     @classmethod
@@ -156,16 +155,14 @@ class Handle(object):
                                          cls.frame_queue,
                                          cls.web_frame_queue,
                                          cls.car_queue))
-        cls.read_process.daemon = True
         cls.read_process.start()
 
     @classmethod
     def create_analysis_process(cls):
         cls.car_process = Process(target=car_analysis,
-                                  args=(cls.scan_flag,
-                                        cls.car_queue,
-                                        cls.web_car_queue))
-        cls.car_process.daemon = True
+                                   args=(cls.scan_flag,
+                                         cls.car_queue,
+                                         cls.web_car_queue))
         cls.car_process.start()
 
     @classmethod

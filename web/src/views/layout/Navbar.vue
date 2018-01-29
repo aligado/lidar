@@ -2,15 +2,6 @@
   <el-menu class="navbar" mode="horizontal">
     <hamburger class="hamburger-container" :toggleClick="toggleSideBar" :isActive="sidebar.opened"></hamburger>
     <levelbar></levelbar>
-    <div class="avatar-container">
-      <el-tag type="success"> 运行中 </el-tag>
-      <el-button-group>
-        <el-button type="danger" size="small" @click="">启动</el-button>
-        <el-button type="danger" size="small" @click="">关闭</el-button>
-        <el-button type="success" size="small" @click="">保存参数</el-button>
-      </el-button-group>
-    </div>
-    <!--
     <el-dropdown class="avatar-container" trigger="click">
       <div class="avatar-wrapper">
         <img class="user-avatar" :src="avatar+'?imageView2/1/w/80/h/80'">
@@ -25,7 +16,6 @@
         <el-dropdown-item divided><span @click="logout" style="display:block;">LogOut</span></el-dropdown-item>
       </el-dropdown-menu>
     </el-dropdown>
-    -->
   </el-menu>
 </template>
 
@@ -84,7 +74,7 @@ export default {
             height: 50px;
             display: inline-block;
             position: absolute;
-            right: 205px;
+            right: 35px;
             .avatar-wrapper {
                 cursor: pointer;
                 margin-top: 5px;

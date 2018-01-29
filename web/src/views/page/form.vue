@@ -4,6 +4,7 @@
       <el-form-item label="雷达ID">
         <el-input v-model="form.id"></el-input>
       </el-form-item>
+      </el-form-item>
       <el-form-item label="雷达高度">
         <el-input v-model="form.height"></el-input>
       </el-form-item>
