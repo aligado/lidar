@@ -213,11 +213,36 @@ export default {
           let ly = this.frame.y
           this.drawRule(ctx)
           this.drawLane()
+          /*
+          ctx.beginPath();
+          for (var i=0; i<lx.length-1; i++) {
+            let tempX = (lx[i]+1600)*9/32
+            let tempY = ly[i]/5
+            let tempX1 = (lx[i+1]+1600)*9/32
+            let tempY1 = ly[i+1]/5
+            ctx.moveTo(tempX, tempY);
+            ctx.lineTo(tempX1, tempY1);
+            // console.log(tempX, tempY)
+          }
+          ctx.closePath();
+          ctx.strokeStyle = "#CC0000"; // 设置线的颜色
+          ctx.lineWidth = 2;
+          ctx.stroke(); // 进行线的着色，这时整条线才变得可见
+          */
           for (var i=0; i<lx.length; i++) {
             let tempX = (lx[i]+1600)*9/32
             let tempY = ly[i]/4
             ctx.fillRect(tempX, tempY, 1, 1);
           }
+
+          /*
+          ctx.beginPath();
+          ctx.moveTo(0,0);
+          ctx.lineTo(99,0);
+          ctx.lineTo(99,99);
+          ctx.lineTo(0,99);
+          ctx.fill();
+          */
           cnt += 1
       }
     },

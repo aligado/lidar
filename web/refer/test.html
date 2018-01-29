@@ -1,0 +1,75 @@
+<HTML>
+
+<HEAD>
+    <TITLE></TITLE>
+    <META content="text/html; charset=gb2312" http-equiv=Content-Type>
+    <META name=keywords content=>
+    <META name=description content=>
+
+    <!-reload-!>
+    <META name=GENERATOR content="MSHTML 8.00.6001.18852">
+    <style type="text/css">
+        a:link {
+            text-decoration: none;
+        }
+
+        a:visited {
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        a:active {
+            text-decoration: none;
+        }
+
+        body {
+            background-color: #F9E9C7;
+        }
+
+        -->
+    </style>
+    <script language="JavaScript">
+        var img = {};  // 创建数组
+        var num = 1000;
+        /*
+        if (document.images) {
+            for (i = 1000; i <= 8000; i++) {
+                img[i] = new Image();  // 创建对象实例
+                img[i].src = "img/rec_20170618_081520_0000" + i + ".jpg"; // 设置所有图片的路径及名称
+            }
+        }
+        */
+        function fort()  // 定义图片切换函数
+        {
+            img = new Image();  // 创建对象实例
+            img.src = "img/rec_20170618_081520_0000" + num + ".jpg"; // 设置所有图片的路径及名称
+            document.images[0].src = img.src  
+            num++;
+            if (num == 8000) {
+                num=1000;
+            }
+        }
+        function slide()  // 每隔1秒连续不断的调用fort()函数
+        {
+        }
+    </script>
+</HEAD>
+
+<BODY onload=slide()>
+    <table width="100%" align="center" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <p> </p>
+                <p>
+                    <img src="img/rec_20170618_081520_00001000.jpg" alt="" width="1280" height="720" align="middle">
+                </p>
+            </td>
+        </tr>
+    </table>
+    <LINK rel=stylesheet type=text/css href="images/style.css">
+</BODY>
+
+</HTML>

@@ -10,16 +10,16 @@ import math
 from file_handle import FileHandle
 from mtools import queue, frame_info_queue, hexstr2int, AllConfig, PI, error_frame
 
-PI = math.pi 
+PI = 3.1415926
+
 hex2int = hexstr2int
 
 class CarInfo(object):
     """
     frameinfo object
-    处理每个
     """
-    threshold_num = AllConfig.threshold_num
-    threshold_height = AllConfig.threshold_height
+    threshold_num = 5
+    threshold_height = 12
 
     def __init__(self, id):
         self.info_list = []
@@ -49,6 +49,7 @@ class CarInfo(object):
     def car_analysis(self, info_list):
         # print('id info_list', self.id, info_list)
         info_len = len(info_list)
+        # return
         begin = 0
         end = info_len - self.threshold_num
         while begin<info_len and info_list[begin] < self.threshold_height:
@@ -57,6 +58,18 @@ class CarInfo(object):
         if begin+self.threshold_num < end:
             info_list = info_list[begin:end]
             # info_len = len(info_list)
+            '''
+            average_height = 0
+            max_height = 0
+            for height in info_list:
+                average_height += height
+                max_height = max(max_height, height)
+            average_height /= info_len
+            ''
+            print('average_height', average_height)
+            print('analysis_list', info_list)
+            print('revolution', end-begin)
+            '''
             return {
                 'id': self.id,
                 'info_list': info_list,
@@ -65,25 +78,21 @@ class CarInfo(object):
 
 def get_frame_info(buf, car_info):
     """
-    将帧的信息分为6个车道进行处理
+    获得每一帧的关键信息
     """
     xdata, ydata = [], []
     buf_len = len(buf)
     if buf_len < 26:
-        return [], [], [], []
-
+        return [], []
     num_len = hex2int(buf[25])
     # print('len ', num_len)
     end = min(26+num_len, buf_len)
-    height = [AllConfig.unuse_height]*6
-
+    height = [6666]*6
     for i in range(26, end):
         angle = ((i - 26) * 0.5 + 0) * PI / 180.0
         vle = hex2int(buf[i]) / 10.0
-
-        # if vle < 100:
-        #     vle = 0
-
+        if vle < 100:
+            vle = 0
         temp_x = math.cos(angle) * vle
         temp_y = math.sin(angle) * vle
         if temp_x < -1600:
@@ -96,13 +105,11 @@ def get_frame_info(buf, car_info):
         elif temp_y > 800:
             temp_y = 800
         temp_y = int(temp_y)
-
         xdata.append(temp_x)
         ydata.append(temp_y)
         for lane_index in range(0, 6):
             if temp_x >= AllConfig.lane_min[lane_index] and temp_x <= AllConfig.lane_max[lane_index]:
-                # if temp_y > 50 and temp_y < height[lane_index]:
-                if temp_y < height[lane_index]:
+                if temp_y > 50 and temp_y < height[lane_index]:
                     height[lane_index] = temp_y
         
     analysis_list = ['null']*6 
@@ -112,13 +119,16 @@ def get_frame_info(buf, car_info):
 
 
 def read_frame(ar, queue, web_frame_queue, car_queue):
-    """
-    读取处理每一帧雷达原始数据的信息
-    """
-
     car_info = [None]*6
     for index in range(0, 6):
         car_info[index] = CarInfo(index)
+    '''
+    car_info[0].horizon_line = 594
+    car_info[1].horizon_line = 573
+    car_info[2].horizon_line = 574
+    car_info[3].horizon_line = 604
+    car_info[4].horizon_line = 481
+    car_info[5].horizon_line = 630
     '''
     car_info[0].horizon_line = 559
     car_info[1].horizon_line = 371
@@ -126,64 +136,52 @@ def read_frame(ar, queue, web_frame_queue, car_queue):
     car_info[3].horizon_line = 605
     car_info[4].horizon_line = 502
     car_info[5].horizon_line = 650
-    '''
-    car_info[0].horizon_line = AllConfig.lane_horizon[0]
-    car_info[1].horizon_line = AllConfig.lane_horizon[1]
-    car_info[2].horizon_line = AllConfig.lane_horizon[2]
-    car_info[3].horizon_line = AllConfig.lane_horizon[3]
-    car_info[4].horizon_line = AllConfig.lane_horizon[4]
-    car_info[5].horizon_line = AllConfig.lane_horizon[5]
-    print 'car_info0.horizon_line', car_info[0].horizon_line
-
+    """
+    处理雷达每帧数据
+    """
     # file_handle = FileHandle()
-
     frame_cnt = 0
     begin_flag = 'sSN'
     end_flag = '0'
-
     while True:
         if ar[0] == 0:
             print 'read_frame close'
             return
         # print 'read_frame process'
-
         while not queue.empty():
+            # print 'read_frame process'
             if ar[0] == 0:
                 print 'read_frame close'
                 return
-
             if queue.qsize < 2:
                 time.sleep(0.1)
                 continue
-
             buf = queue.get()
             # print buf
             buf_split = buf.split()
-
             if len(buf_split) == 0:
                 continue
             if buf_split[0] == begin_flag:
                 if buf_split[-1] != end_flag:
                     next_buf_split = queue.get().split()
-                    if len(next_buf_split) and next_buf_split[-1] == end_flag:
+                    if next_buf_split[-1] == end_flag:
                         buf_split += next_buf_split
             else:
                 continue
             # print buf_split
-
             xdata, ydata, height, analysis_data = get_frame_info(buf_split, car_info)
-            '''
-            for i in range(0, len(xdata)):
-                print xdata[i], ydata[i]
-            print ''
-            print height
-            '''
             for temp in analysis_data:
                 if temp != 'null':
                     car_queue.put(temp)
 
-            if web_frame_queue.empty():
-                web_frame_queue.put([xdata, ydata, height, analysis_data])
+            # if web_frame_queue.empty():
+            web_frame_queue.put([xdata, ydata, height, analysis_data])
+            '''
+            for i in range(0, len(xdata)):
+                print xdata[i], ydata[i]
+            print ''
+            '''
+            # print height
 
         time.sleep(0.1)
 
