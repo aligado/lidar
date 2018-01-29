@@ -85,8 +85,10 @@ class LidarHandle(object):
         """
         发送关闭连续获取数据命令
         """
-        ar[0] = 0
         self.s.send("sEN LMDscandata 0")
+        ar[0] = 0
+        time.sleep(2)
+        
 
 
 def main():
@@ -137,6 +139,40 @@ def frametest():
     # analysis_process.start()
 
 
+def test():
+    """
+    模块单元测试
+    """
+    AllConfig.read_config_file()
+    lidar = LidarHandle(AllConfig.host, AllConfig.port)
+    lidar.connect()
+    
+    def print_queue(ar):
+        while True:
+            while not queue.empty():
+                buf = queue.get()
+                print buf[0:20]
+            if ar[0] == 0:
+                return
+            time.sleep(0.1)
+
+    # print queue.qsize()
+    scan_flag = Array('i', 1)
+    scan_flag[0] = 1
+    scandata1_process = Process(target=lidar.open_scandata1,
+                                args=(scan_flag, ))
+    scandata1_process.daemon = True
+    scandata1_process.start()
+
+    print_process = Process(target=print_queue, args=(scan_flag, ))
+    print_process.daemon = True
+    print_process.start()
+
+    time.sleep(2)
+    lidar.close_scandata1(scan_flag)
+    lidar.close()
+    time.sleep(5)
+        
 def unittest():
     """
     模块单元测试
@@ -237,6 +273,14 @@ def cli(argv):
     print(argv)
     if argv[1] == 'record':
         record_lidar_frame()
+    if argv[1] == 'test':
+        max_cnt = 100
+        cnt = 0
+        while cnt < max_cnt:
+            test()
+            cnt += 1
+            print 'done ', cnt
+            time.sleep(5)
 
 
 if __name__ == '__main__':
