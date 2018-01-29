@@ -91,6 +91,7 @@ class LidarHandle(object):
         
 
 
+# just for test below
 def main():
     AllConfig.read_config_file()
     lidar = LidarHandle(AllConfig.host, AllConfig.port)
