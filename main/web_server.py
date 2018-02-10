@@ -57,7 +57,7 @@ def frame():
     雷达帧信息
     包含：
     激光扫描点坐标
-    高度信息
+    车辆高度信息
     解析信息
     """
     temp = Handle.web_frame_queue.get()
