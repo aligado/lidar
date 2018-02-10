@@ -54,8 +54,7 @@ def car_analysis(ar, car_queue, web_car_queue):
                 'max_height': max_height,
                 'average_q': average_q
             }
-            if web_car_queue.qsize < 5000:
-                web_car_queue.put(car_res)
+            web_car_queue.put(car_res)
             print car_res
         time.sleep(0.1)
 

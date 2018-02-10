@@ -60,9 +60,12 @@ def frame():
     车辆高度信息
     解析信息
     """
+    '''
+    Handle.web_frame_queue.clear()
+    while Handle.web_frame_queue.qsize() == 0:
+        time.sleep(0.1) 
+    '''
     temp = Handle.web_frame_queue.get()
-    print 'frame route'
-    # print temp
     res = {
         'x': temp[0],
         'y': temp[1],
@@ -80,6 +83,14 @@ def info():
     }
     return jsonify(res)
 
+@app.route('/poweron', methods=['GET'])
+def poweron():
+    res = {
+        'code': 20000,
+        'data': 'ok'
+    }
+    system_poweron()
+    return jsonify(res)
 
 @app.route('/car', methods=['GET'])
 def car():
@@ -92,15 +103,6 @@ def car():
         'code': 20000,
         'data': data 
     }
-    return jsonify(res)
-
-@app.route('/poweron', methods=['GET'])
-def poweron():
-    res = {
-        'code': 20000,
-        'data': 'ok'
-    }
-    system_poweron()
     return jsonify(res)
 
 @app.route('/shutdown', methods=['GET'])
@@ -141,18 +143,16 @@ class Handle(object):
     read_process = None
     car_process = None
     frame_queue = queue
-    car_queue = Queue()
-
     web_frame_queue = Queue()
     web_lane_queue = Queue()
     web_car_queue = Queue()
+    car_queue = Queue()
     
     @classmethod
     def create_scan_process(cls):
         cls.scan_flag[0] = 1
         cls.scandata1_process = Process(target=cls.lidar.open_scandata1,
                                         args=(cls.scan_flag, ))
-        cls.scandata1_process.daemon = True
         cls.scandata1_process.start()
     
     @classmethod
@@ -162,16 +162,14 @@ class Handle(object):
                                          cls.frame_queue,
                                          cls.web_frame_queue,
                                          cls.car_queue))
-        cls.read_process.daemon = True
         cls.read_process.start()
 
     @classmethod
     def create_analysis_process(cls):
         cls.car_process = Process(target=car_analysis,
-                                  args=(cls.scan_flag,
-                                        cls.car_queue,
-                                        cls.web_car_queue))
-        cls.car_process.daemon = True
+                                   args=(cls.scan_flag,
+                                         cls.car_queue,
+                                         cls.web_car_queue))
         cls.car_process.start()
 
     @classmethod
@@ -182,16 +180,18 @@ class Handle(object):
     @classmethod
     def close_scan_process(cls):
         cls.lidar.close_scandata1(cls.scan_flag)
+
+    @classmethod
+    def close_lidar(cls):
         cls.lidar.close()
-        time.sleep(2)
 
 def system_shutdown():
-    """
-    关闭雷达持续扫描,断开tcp连接
-    """
     # time.sleep(600)
     Handle.close_scan_process()
     print 'close_scan_process'
+    time.sleep(3)
+    Handle.close_lidar()
+    print 'close_lidar'
      
 def system_poweron():
     """
@@ -210,6 +210,7 @@ def system_poweron():
         print Handle.frame_queue.get()
         print ""
     '''
+    time.sleep(3)
 
 if __name__ == '__main__':
     # system_poweron()

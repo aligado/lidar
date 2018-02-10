@@ -7,14 +7,10 @@
 
 from ctypes import c_int32
 import json
-import math
 from multiprocessing import Queue
 
 test_thread = True
-queue = Queue()
-frame_info_queue = Queue()
-error_frame = 0
-PI = math.pi
+PI = 3.1415926
 
 def load_config(path):
     f = open(path, 'r+')
@@ -25,6 +21,7 @@ def load_config(path):
     for i in conf:
         if type(conf[i]) == type(u'1'):
             conf[i] = conf[i].encode('utf-8')
+
     return conf
 
 def hexstr2int(hex_int):
@@ -32,15 +29,11 @@ def hexstr2int(hex_int):
 
 class AllConfig(object):
     lane_min = [0]*6
-    lane_num = 0
+    lane_num = 6
     lane_max = [0]*6
-    lane_horizon = [0]*6
-    threshold_num = 5
-    threshold_height = 12
-    unuse_height = 0
-    lidar_height = 0
-    lidar_hz = 0
-    lidar_resolution = 0
+    lidar_height = 800
+    lidar_hz = 25
+    lidar_resolution = 0.5
     lidar_start_angle = 0
     lidar_end_angle = 0
     ftp_path = ''
@@ -56,10 +49,6 @@ class AllConfig(object):
         AllConfig.lane_max = temp_conf['lane_max']
         AllConfig.lane_num = temp_conf['lane_num']
         AllConfig.lane_min = temp_conf['lane_min']
-        AllConfig.lane_horizon = temp_conf['lane_horizon']
-        AllConfig.threshold_height = temp_conf['threshold_height']
-        AllConfig.threshold_num = temp_conf['threshold_num']
-        AllConfig.unuse_height = temp_conf['unuse_height']
         AllConfig.lidar_start_angle = temp_conf['lidar_start_angle']
         AllConfig.lidar_end_angle = temp_conf['lidar_end_angle']
         AllConfig.lidar_resolution = temp_conf['lidar_resolution']
@@ -73,11 +62,16 @@ class AllConfig(object):
         AllConfig.car_threshold = temp_conf['car_threshold']
         print AllConfig.__dict__
 
+queue = Queue()
+frame_info_queue = Queue()
+error_frame = 0
+PI = 3.1415926
 
 def test(args):
     AllConfig.read_config_file()
     pass
-
+'''
 if __name__ == '__main__':
     import sys
     sys.exit(test(sys.argv))
+'''

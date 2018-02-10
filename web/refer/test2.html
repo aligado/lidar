@@ -1,0 +1,59 @@
+<html>
+
+<head>
+    <title>Canvas tutorial</title>
+    <style type="text/css">
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <script type="text/javascript">
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var raf;
+
+        var ball = {
+            x: 100,
+            y: 100,
+            vx: 5,
+            vy: 5,
+            radius: 25,
+            color: 'blue',
+            draw: function () {
+                ctx.beginPath();
+                //ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+                ctx.moveTo(this.x, this.y); // 设置路径起点，坐标为(20,20)
+                ctx.lineTo(this.x+20, this.y+20);
+                ctx.moveTo(this.x+40, this.y+40); // 设置路径起点，坐标为(20,20)
+                ctx.lineTo(this.x+60, this.y+60);
+                ctx.closePath();
+                ctx.strokeStyle = "#CC0000"; // 设置线的颜色
+                ctx.stroke(); // 进行线的着色，这时整条线才变得可见
+            }
+        };
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ball.draw();
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+        }
+
+        canvas.addEventListener('mouseover', function (e) {
+            raf = window.requestAnimationFrame(draw);
+        });
+
+        canvas.addEventListener('mouseout', function (e) {
+            window.cancelAnimationFrame(raf);
+        });
+
+        ball.draw();
+        setInterval("draw()", 1000);
+    </script>
+</body>
+
+</html>
