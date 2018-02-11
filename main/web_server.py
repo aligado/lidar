@@ -69,6 +69,13 @@ def frame():
         'height': temp[2],
         'analysis': temp[3]
     }
+
+    # for debug
+    '''
+    for index in range(len(temp[0])):
+        print 'x', temp[0][index], 'y', temp[1][index],
+    '''
+
     return jsonify({'data': res,
                     'code': 20000})
 
@@ -124,15 +131,29 @@ def config():
     return jsonify(content)
 '''
 
-@app.route('/config', methods=['GET'])
+@app.route('/config', methods=['GET', 'POST'])
 def config():
-    fp = open('lidarconfig.json', 'r+')
-    content = json.loads(fp.read())
-    fp.close()
-    res = {
-        'hello': 'world'
-    }
-    return jsonify(content)
+    if request.method == 'GET':
+        fp = open('lidar.conf', 'r+')
+        content = json.loads(fp.read())
+        fp.close()
+        res = {
+            'code': 20000,
+            'data': content
+        }
+        return jsonify(res)
+    if request.method == 'POST':
+        # print request.get_data()
+        fp = open('lidar.conf', 'w+')
+        content = json.loads(request.get_data().decode('utf-8'))
+        fp.write(json.dumps(content.get("configData")))
+        fp.close()
+        print content.get("configData")
+        res = {
+            'code': 20000,
+            'data': 'ok'
+        }
+        return jsonify(res)
 
 class Handle(object):
     lidar = None

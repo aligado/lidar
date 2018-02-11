@@ -27,6 +27,7 @@ export const constantRouterMap = [
     children: [{ path: 'index', name: '检测', component: _import('logtable/index') }]
   },
 
+  /*
   {
     path: '/config',
     component: Layout,
@@ -38,6 +39,7 @@ export const constantRouterMap = [
       { path: 'index', name: '配置', icon: 'zonghe', component: _import('page/form') }
     ]
   },
+  */
 
   {
     path: '/dev',
@@ -45,7 +47,7 @@ export const constantRouterMap = [
     icon: 'tubiao',
     redirect: 'noredirect',
     noDropdown: true,
-    children: [{ path: 'index', name: '调试', component: _import('playlog/PlayLidar') }]
+    children: [{ path: 'index', name: '配置', component: _import('playlog/PlayLidar') }]
   },
 
   { path: '*', redirect: '/view/index', hidden: true }

@@ -15,6 +15,23 @@ export function getCar() {
   })
 }
 
+export function loadPara() {
+  return fetch({
+    url: '/config',
+    method: 'get',
+  })
+}
+
+export function savePara(configData) {
+  return fetch({
+    url: '/config',
+    method: 'post',
+    data: {
+      configData
+    },
+  })
+}
+
 export function shutdown() {
   return fetch({
     url: '/shutdown',

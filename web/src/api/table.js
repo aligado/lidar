@@ -4,6 +4,5 @@ export function getList(params) {
   return fetch({
     url: '/table/list',
     method: 'get',
-    params
   })
 }

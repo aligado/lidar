@@ -70,13 +70,13 @@
     <div class="play-right">
       <el-form ref="form" :model="form" label-width="80px">
         <el-form-item label="雷达ID">
-          <el-input v-model="form.id"></el-input>
+          <el-input v-model="form.lidar_id"></el-input>
         </el-form-item>
         <el-form-item label="雷达高度">
-          <el-input v-model="form.height"></el-input>
+          <el-input v-model="form.lidar_height"></el-input>
         </el-form-item>
         <el-form-item label="补偿角度">
-          <el-input-number v-model="num8" controls-position="right" :min="-30" :max="30"></el-input-number>
+          <el-input-number v-model="form.lidar_fix_angle" controls-position="right" :min="-60" :max="60"></el-input-number>
         </el-form-item>
         <el-form-item v-for="index in range" :key="index" :label="'车道'+(index+1)">
           <el-col :span="3">
@@ -95,15 +95,15 @@
             hor:
           </el-col>
           <el-col :span="5">
-            <el-input v-model.number="form.lane_max[index]"></el-input>
+            <el-input v-model.number="form.lane_horizon[index]"></el-input>
           </el-col>
         </el-form-item>
         <el-form-item label="备注">
           <el-input type="textarea" v-model="form.desc"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="cancel">保存</el-button>
-          <el-button @click="cancel">重置</el-button>
+          <el-button type="primary" @click="savePara">保存</el-button>
+          <el-button @click="loadPara">读取</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -112,20 +112,46 @@
 
 <script>
 import { getLidar } from '@/api/playlidar'
+import { getCar, poweron, shutdown, loadPara, savePara } from '@/api/logtable'
 
 let cnt = 0
+
+const defaultPara = {
+    "lidar_id": 1,
+    "host": "192.168.0.1",
+    "port": 2111,
+    "bufsize": 2048, 
+    "lidar_fix_angle": 0,
+    "lane_num": 6, 
+    "lane_min": [-1050, -800, -400, 0, 560, 800],
+    "lane_max": [-800, -560, 0, 400, 800, 1200],
+    "lane_horizon": [588, 600, 600, 600, 600, 600],
+    "threshold_num": 5,
+    "threshold_height": 12,
+    "unuse_height": 6666,
+    "car_threshold": 60,
+    "lidar_height": 800,
+    "lidar_hz": 25,
+    "lidar_resolution": 0.5,
+    "lidar_start_angle": 0,
+    "lidar_end_angle": 0,
+    "localpath": "/home/ubuntu/ServerLog",
+    "ftppath": "/"
+}
+
 export default {
   data() {
     return {
       range: [0, 1, 2, 3, 4, 5],
       form: {
-        id: 'hello wrold',
-        height: 0,
+        lidar_id: 1,
+        lidar_height: 0,
         lane_min: [-1199, -800, -400, 0, 400, 800],
         lane_max: [-800, -400, 0, 400, 800, 1200],
-        desc: ''
+        lane_horizon: [-800, -400, 0, 400, 800, 1200],
+        lidar_fix_angle: 0,
       },
-      num8: 0,
+      configData: defaultPara,
       formCopy: null,
       drawInterval: null,
       frame: null,
@@ -141,6 +167,38 @@ export default {
     }
   },
   methods: {
+    savePara() {
+      console.log(this.form)
+      this.configData.lidar_id =  this.form.lidar_id
+      this.configData.lidar_height = this.form.lidar_height
+      this.configData.lidar_fix_angle =this.form.lidar_fix_angle
+      this.configData.lane_min =this.form.lane_min
+      this.configData.lane_max =this.form.lane_max
+      this.configData.lane_horizon =this.form.lane_horizon
+      savePara(this.configData)
+        .then(res => {
+          console.log(res.data)
+        }, error => {
+          console.log(error)
+        })
+    },
+    loadPara() {
+      loadPara()
+        .then(res => {
+          this.configData = res.data
+          const data = res.data
+          console.log(data)
+          this.form.lidar_id = data.lidar_id 
+          this.form.lidar_height = data.lidar_height
+          this.form.lidar_fix_angle = data.lidar_fix_angle
+          this.form.lane_min = data.lane_min 
+          this.form.lane_max = data.lane_max
+          this.form.lane_horizon = data.lane_horizon
+          console.log(this.form)
+        }, error => {
+          console.log(error)
+        })
+    },
     play() {
       getLidar().then(res => {
           console.log(res.data)

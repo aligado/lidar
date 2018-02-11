@@ -37,6 +37,7 @@ class AllConfig(object):
     lane_horizon = [0]*6
     threshold_num = 5
     threshold_height = 12
+    lidar_fix_angle = 0
     unuse_height = 0
     lidar_height = 0
     lidar_hz = 0
@@ -60,6 +61,7 @@ class AllConfig(object):
         AllConfig.threshold_height = temp_conf['threshold_height']
         AllConfig.threshold_num = temp_conf['threshold_num']
         AllConfig.unuse_height = temp_conf['unuse_height']
+        AllConfig.lidar_fix_angle = temp_conf['lidar_fix_angle']
         AllConfig.lidar_start_angle = temp_conf['lidar_start_angle']
         AllConfig.lidar_end_angle = temp_conf['lidar_end_angle']
         AllConfig.lidar_resolution = temp_conf['lidar_resolution']

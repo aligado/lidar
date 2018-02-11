@@ -78,7 +78,7 @@ def get_frame_info(buf, car_info):
     height = [AllConfig.unuse_height]*6
 
     for i in range(26, end):
-        angle = ((i - 26) * 0.5 + 0) * PI / 180.0
+        angle = ((i - 26 + AllConfig.lidar_fix_angle) * 0.5 + 0) * PI / 180.0
         vle = hex2int(buf[i]) / 10.0
 
         # if vle < 100:

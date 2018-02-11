@@ -5,8 +5,8 @@
     <div class="avatar-container">
       <el-tag type="success"> 运行中 </el-tag>
       <el-button-group>
-        <el-button type="danger" size="small" @click="">启动</el-button>
-        <el-button type="danger" size="small" @click="">关闭</el-button>
+        <el-button type="danger" size="small" @click="poweron">启动</el-button>
+        <el-button type="danger" size="small" @click="shutdown">关闭</el-button>
         <el-button type="success" size="small" @click="">保存参数</el-button>
       </el-button-group>
     </div>
@@ -33,6 +33,7 @@
 import { mapGetters } from 'vuex'
 import Levelbar from './Levelbar'
 import Hamburger from '@/components/Hamburger'
+import { getCar, poweron, shutdown } from '@/api/logtable'
 
 export default {
   components: {
@@ -46,6 +47,22 @@ export default {
     ])
   },
   methods: {
+    poweron() {
+      poweron()
+        .then(res => {
+          console.log(res)
+        }, error => {
+          console.log(error)
+        })
+    },
+    shutdown() {
+      shutdown()
+        .then(res => {
+          console.log(res)
+        }, error => {
+          console.log(error)
+        })
+    },
     toggleSideBar() {
       this.$store.dispatch('ToggleSideBar')
     },
