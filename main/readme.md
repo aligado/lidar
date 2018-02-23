@@ -7,4 +7,7 @@
 # 2 启动
 python web_server.py
 
+# lidar.py
+* lidar驱动程序,使用tcp和sick激光连接
+* 正常工作时主要使用scandata 1连续扫描的模式
 

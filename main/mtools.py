@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#Author: alpc32 
-#Date: 2017-09-12 22:29:40 
-#Last Modified by:   alpc32 
-#Last Modified time: 2017-09-12 22:29:40 
+# Author: alpc32
+# Date: 2017-09-12 22:29:40
+# Last Modified by:   alpc32
+# Last Modified time: 2017-09-12 22:29:40
+"""
+工具模块
+"""
 
 from ctypes import c_int32
 import json
 import math
 from multiprocessing import Queue
 
-test_thread = True
+# test_thread = True
+# frame_info_queue = Queue()
+# error_frame = 0
 queue = Queue()
-frame_info_queue = Queue()
-error_frame = 0
 PI = math.pi
 
 def load_config(path):
@@ -31,24 +34,27 @@ def hexstr2int(hex_int):
 	return c_int32(int(hex_int, 16)).value
 
 class AllConfig(object):
-    lane_min = [0]*6
-    lane_num = 0
-    lane_max = [0]*6
-    lane_horizon = [0]*6
-    threshold_num = 5
-    threshold_height = 12
-    lidar_fix_angle = 0
+    """
+    读取配置文件所有数据
+    """
+    lidar_height = 0 # 雷达高度
+    lane_num = 0 # 车道数量
+    lane_min = [0]*6 # 车道边界最小值
+    lane_max = [0]*6 # 车道边界最大值
+    lane_horizon = [0]*6 # 车道水平线相对倒装雷达
+    threshold_num = 5 # 间隔阈值
+    threshold_height = 12 # 车辆触发高度阈值
+    lidar_fix_angle = 0 # 雷达修正角度
     unuse_height = 0
-    lidar_height = 0
     lidar_hz = 0
     lidar_resolution = 0
     lidar_start_angle = 0
     lidar_end_angle = 0
-    ftp_path = ''
     host = '192.168.0.1'
     port = 2111
     bufsize = 2048
     car_threshold = 60
+    ftp_path = ''
 
     @staticmethod
     def read_config_file(path="lidar.conf"):

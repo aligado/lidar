@@ -7,11 +7,20 @@
 
 import time
 import math
-from file_handle import FileHandle
-from mtools import queue, frame_info_queue, hexstr2int, AllConfig, PI
+# from file_handle import FileHandle
+from mtools import queue, hexstr2int, AllConfig, PI
 
 
 def car_analysis(ar, car_queue, web_car_queue):
+    """
+    @ar 进程共享变量控制进程开关
+    @car_queue 车辆信息队列
+    @web_car_queue 前端可视的探测车辆信息
+    车辆分析主程
+    car_queue存储所有探测到车辆的雷达波形
+    能够解析到的信息包括
+    车辆平均高度,方差,波形长度,车道id
+    """
     while True:
         if ar[0] == 0:
             print 'close car analysis'
@@ -33,7 +42,7 @@ def car_analysis(ar, car_queue, web_car_queue):
                 average_height += height
                 max_height = max(max_height, height)
             average_height /= info_len
-            
+
             average_q = 0
             for height in info_list:
                 average_q += (height-average_height)*(height-average_height)
@@ -54,11 +63,17 @@ def car_analysis(ar, car_queue, web_car_queue):
                 'max_height': max_height,
                 'average_q': average_q
             }
+            '''
+            print 'web_car_queue', web_car_queue.qsize()
             if web_car_queue.qsize < 5000:
                 web_car_queue.put(car_res)
-            print car_res
+                print 'insert car'
+            '''
+            web_car_queue.put(car_res)
+            print 'car_res', car_res
         time.sleep(0.1)
 
+
 if __name__ == '__main__':
-    import sys
-    sys.exit(unittest(sys.argv))
+    # import sys
+    pass

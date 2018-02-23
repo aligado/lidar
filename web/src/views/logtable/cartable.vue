@@ -21,23 +21,22 @@
     </div>
     <div class="play-right">
       <div class="table">
-        <el-table :data="carList" border fit highlight-current-row>
-          <el-table-column :min-width="40" align="center" label='ID'>
-            <template scope="scope">
-              {{scope.$index}}
-            </template>
-          </el-table-column>
-          <el-table-column :min-width="140" label="信息" align="center">
-            <template scope="scope">
-              {{scope.row.type}}
-            </template>
-          </el-table-column>
-          <el-table-column :min-width="100" label="操作" align="center">
-            <template scope="scope">
-              {{scope.row.num}}
-            </template>
-          </el-table-column>
-        </el-table>
+      <el-table :data="carList" border fit highlight-current-row>
+        <el-table-column :min-width="40" align="center" label='ID'>
+          <template scope="scope">
+            {{scope.$index}}
+          </template>
+        </el-table-column>
+        <el-table-column :min-width="140" label="车型" align="center">
+          <template scope="scope">
+            {{scope.row.info}}
+          </template>
+        </el-table-column>
+        <el-table-column :min-width="100" label="数量" align="center">
+          <template scope="scope">
+          </template>
+        </el-table-column>
+      </el-table>
       </div>
     </div>
   </div>
@@ -76,6 +75,9 @@ export default {
       for (let i=0; i<res.length; i++) {
         this.carQueue.push(res[i])
         console.log(res[i])
+        this.carList.push({
+          'info': res[i],
+        })
       }
       if (this.carQueue.length > 0) {
         this.analysis = this.carQueue.shift()
@@ -145,7 +147,7 @@ export default {
   mounted() {
     for (let i=0; i<this.typeList.length; i++) {
       this.carList.push({
-        'type': this.typeList[i],
+        'info': this.typeList[i],
         'num': 0
       })
     }

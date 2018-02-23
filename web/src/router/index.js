@@ -27,6 +27,15 @@ export const constantRouterMap = [
     children: [{ path: 'index', name: '检测', component: _import('logtable/index') }]
   },
 
+  {
+    path: '/carlist',
+    component: Layout,
+    redirect: 'noredirect',
+    icon: 'tubiao',
+    noDropdown: true,
+    children: [{ path: 'index', name: '列表', component: _import('logtable/cartable') }]
+  },
+
   /*
   {
     path: '/config',

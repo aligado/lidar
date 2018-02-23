@@ -58,6 +58,7 @@
       <div class="play-control">
         <el-button-group>
           <el-button type="primary" class="" @click="start">播放</el-button>
+          <el-button type="danger" class="" @click="over">停止</el-button>
           <el-button type="primary" class="" @click="play">单步</el-button>
           <!--
           <el-button type="primary" class="" @click="start">start</el-button>
@@ -68,38 +69,38 @@
       </div>
     </div>
     <div class="play-right">
-      <el-form ref="form" :model="form" label-width="80px">
+      <el-form ref="form" :model="configData" label-width="80px">
         <el-form-item label="雷达ID">
-          <el-input v-model="form.lidar_id"></el-input>
+          <el-input v-model="configData.lidar_id"></el-input>
         </el-form-item>
         <el-form-item label="雷达高度">
-          <el-input v-model="form.lidar_height"></el-input>
+          <el-input v-model="configData.lidar_height"></el-input>
         </el-form-item>
         <el-form-item label="补偿角度">
-          <el-input-number v-model="form.lidar_fix_angle" controls-position="right" :min="-60" :max="60"></el-input-number>
+          <el-input-number v-model="configData.lidar_fix_angle" controls-position="right" :min="-60" :max="60"></el-input-number>
         </el-form-item>
         <el-form-item v-for="index in range" :key="index" :label="'车道'+(index+1)">
           <el-col :span="3">
             min:
           </el-col>
           <el-col :span="5">
-            <el-input v-model.number="form.lane_min[index]"></el-input>
+            <el-input v-model.number="configData.lane_min[index]"></el-input>
           </el-col>
           <el-col :span="3">
             max:
           </el-col>
           <el-col :span="5">
-            <el-input v-model.number="form.lane_max[index]"></el-input>
+            <el-input v-model.number="configData.lane_max[index]"></el-input>
           </el-col>
           <el-col :span="3">
             hor:
           </el-col>
           <el-col :span="5">
-            <el-input v-model.number="form.lane_horizon[index]"></el-input>
+            <el-input v-model.number="configData.lane_horizon[index]"></el-input>
           </el-col>
         </el-form-item>
         <el-form-item label="备注">
-          <el-input type="textarea" v-model="form.desc"></el-input>
+          <el-input type="textarea" v-model="configData.desc"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="savePara">保存</el-button>
@@ -136,7 +137,8 @@ const defaultPara = {
     "lidar_start_angle": 0,
     "lidar_end_angle": 0,
     "localpath": "/home/ubuntu/ServerLog",
-    "ftppath": "/"
+    "ftppath": "/",
+    "desc": "hello world"
 }
 
 export default {
@@ -168,6 +170,7 @@ export default {
   },
   methods: {
     savePara() {
+      /*
       console.log(this.form)
       this.configData.lidar_id =  this.form.lidar_id
       this.configData.lidar_height = this.form.lidar_height
@@ -175,6 +178,7 @@ export default {
       this.configData.lane_min =this.form.lane_min
       this.configData.lane_max =this.form.lane_max
       this.configData.lane_horizon =this.form.lane_horizon
+      */
       savePara(this.configData)
         .then(res => {
           console.log(res.data)
@@ -186,6 +190,7 @@ export default {
       loadPara()
         .then(res => {
           this.configData = res.data
+          /*
           const data = res.data
           console.log(data)
           this.form.lidar_id = data.lidar_id 
@@ -194,7 +199,8 @@ export default {
           this.form.lane_min = data.lane_min 
           this.form.lane_max = data.lane_max
           this.form.lane_horizon = data.lane_horizon
-          console.log(this.form)
+          */
+          console.log(this.configData)
         }, error => {
           console.log(error)
         })
@@ -221,19 +227,49 @@ export default {
           console.log(error)
         })
     },
+    drawLaneEdge(ctx) {
+      ctx.beginPath()
+      const fixData = parseInt(ctx.canvas.width/2)
+      console.log('fixData', fixData)
+      // console.log(step)
+      ctx.font = "Bold 12px Arial"; 
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#00CC00"; 
+      for (let i =0; i<this.configData.lane_num; i++) {
+        console.log('lane index', i)
+        console.log(this.configData.lane_min[i]+fixData);
+        let tempX = (this.configData.lane_min[i]+1600)*9/32
+        let tempY = (this.configData.lane_max[i]+1600)*9/32
+        let tempH = this.configData.lane_horizon[i]/4
+        ctx.moveTo(tempX, tempH-10);
+        ctx.lineTo(tempX, tempH+10);
+        ctx.moveTo(tempY, tempH-10);
+        ctx.lineTo(tempY, tempH+10);
+        ctx.moveTo(tempX, tempH);
+        ctx.lineTo(tempY, tempH);
+        ctx.fillText(i+1, (tempX+tempY)/2, tempH-5); 
+      }
+      ctx.closePath();
+      ctx.strokeStyle = "#00CC00"; // 设置线的颜色
+      ctx.lineWidth = 2;
+      ctx.stroke(); // 进行线的着色，这时整条线才变得可见
+    },
     drawRule(ctx) {
       ctx.beginPath()
       const step = parseInt(ctx.canvas.width/32)
       // console.log(step)
+      ctx.font = "Bold 12px Arial"; 
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#CC0000"; 
       for (let i =0; i<ctx.canvas.width; i+=step) {
         ctx.moveTo(i, ctx.canvas.height);
         ctx.lineTo(i, ctx.canvas.height - 10);
-
-        ctx.font = "Bold 12px Arial"; 
-        ctx.textAlign = "center";
-        ctx.fillStyle = "#CC0000"; 
         ctx.fillText((i/step-16), i,ctx.canvas.height - 10 ); 
-        ctx.lineWidth = 2;
+        if (i/step-16 == 0) {
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, 20);
+          ctx.fillText('LIDAR', i, 30 ); 
+        }
       }
       ctx.closePath();
       ctx.strokeStyle = "#CC0000"; // 设置线的颜色
@@ -270,6 +306,8 @@ export default {
           let lx = this.frame.x
           let ly = this.frame.y
           this.drawRule(ctx)
+          this.drawLaneEdge(ctx)
+          ctx.fillStyle = "#CC0000"; 
           this.drawLane()
           for (var i=0; i<lx.length; i++) {
             let tempX = (lx[i]+1600)*9/32
@@ -303,7 +341,7 @@ export default {
       clearInterval(this.drawInterval)
       this.drawInterval = setInterval(() => {
         this.play()
-        }, 50)
+        }, 200)
     }, 
     over() {
       clearInterval(this.drawInterval)

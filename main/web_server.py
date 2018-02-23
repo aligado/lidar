@@ -6,7 +6,7 @@ from flask_cors import CORS
 from cStringIO import StringIO as IO
 import json
 import gzip
-import functools 
+import functools
 from lidar import LidarHandle
 from mtools import hexstr2int, queue, AllConfig
 from multiprocessing import Process, Array, Value, Queue
@@ -16,6 +16,7 @@ from analysis import car_analysis
 
 app = Flask(__name__)
 CORS(app)
+TEST = 1
 
 def gzipped(f):
     @functools.wraps(f)
@@ -30,11 +31,11 @@ def gzipped(f):
             response.direct_passthrough = False
 
             if (response.status_code < 200 or
-                response.status_code >= 300 or 
+                response.status_code >= 300 or
                 'Content-Encoding' in response.headers):
                 return response
             gzip_buffer = IO()
-            gzip_file = gzip.GzipFile(mode='wb', 
+            gzip_file = gzip.GzipFile(mode='wb',
                                       fileobj=gzip_buffer)
             gzip_file.write(response.data)
             gzip_file.close()
@@ -60,15 +61,22 @@ def frame():
     高度信息
     解析信息
     """
-    temp = Handle.web_frame_queue.get()
-    print 'frame route'
-    # print temp
     res = {
-        'x': temp[0],
-        'y': temp[1],
-        'height': temp[2],
-        'analysis': temp[3]
+        'x': [],
+        'y': [],
+        'height': [],
+        'analysis': []
     }
+    if not Handle.web_frame_queue.empty():
+        temp = Handle.web_frame_queue.get()
+        print 'frame route'
+        # print temp
+        res = {
+            'x': temp[0],
+            'y': temp[1],
+            'height': temp[2],
+            'analysis': temp[3]
+        }
 
     # for debug
     '''
@@ -95,18 +103,21 @@ def car():
     while (not Handle.web_car_queue.empty()) and (cnt <10):
         data.append(Handle.web_car_queue.get())
         cnt += 1
+    print 'car data', data
     res = {
         'code': 20000,
-        'data': data 
+        'data': data
     }
     return jsonify(res)
 
 @app.route('/poweron', methods=['GET'])
 def poweron():
+    print 'poweron' # for debug
     res = {
         'code': 20000,
         'data': 'ok'
     }
+    # return jsonify(res) for debug
     system_poweron()
     return jsonify(res)
 
@@ -167,15 +178,22 @@ class Handle(object):
     web_frame_queue = Queue()
     web_lane_queue = Queue()
     web_car_queue = Queue()
-    
+
     @classmethod
     def create_scan_process(cls):
         cls.scan_flag[0] = 1
-        cls.scandata1_process = Process(target=cls.lidar.open_scandata1,
-                                        args=(cls.scan_flag, ))
+
+        if TEST:
+            cls.scandata1_process = Process(target=cls.lidar.open_test,
+                                            args=(cls.scan_flag,
+                                                  cls.frame_queue))
+        else:
+            cls.scandata1_process = Process(target=cls.lidar.open_scandata1,
+                                            args=(cls.scan_flag, ))
+
         cls.scandata1_process.daemon = True
         cls.scandata1_process.start()
-    
+
     @classmethod
     def create_read_process(cls):
         cls.read_process = Process(target=read_frame,
@@ -198,10 +216,14 @@ class Handle(object):
     @classmethod
     def connect(cls):
         cls.lidar = LidarHandle(AllConfig.host, AllConfig.port)
-        cls.lidar.connect()
+        if not TEST:
+            cls.lidar.connect()
 
     @classmethod
     def close_scan_process(cls):
+        if TEST:
+            cls.scan_flag[0] = 0
+            return
         cls.lidar.close_scandata1(cls.scan_flag)
         cls.lidar.close()
         time.sleep(2)
@@ -213,7 +235,7 @@ def system_shutdown():
     # time.sleep(600)
     Handle.close_scan_process()
     print 'close_scan_process'
-     
+
 def system_poweron():
     """
     初始化
