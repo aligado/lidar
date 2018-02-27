@@ -7,8 +7,9 @@
 
 import time
 import math
-# from file_handle import FileHandle
+from file_handle import FileHandle
 from mtools import queue, hexstr2int, AllConfig, PI
+import json
 
 
 def car_analysis(ar, car_queue, web_car_queue):
@@ -21,6 +22,7 @@ def car_analysis(ar, car_queue, web_car_queue):
     能够解析到的信息包括
     车辆平均高度,方差,波形长度,车道id
     """
+    car_file = FileHandle()
     while True:
         if ar[0] == 0:
             print 'close car analysis'
@@ -69,8 +71,9 @@ def car_analysis(ar, car_queue, web_car_queue):
                 web_car_queue.put(car_res)
                 print 'insert car'
             '''
-            web_car_queue.put(car_res)
             print 'car_res', car_res
+            car_file.write(json.dumps(car_res))
+            # web_car_queue.put(car_res)
         time.sleep(0.1)
 
 

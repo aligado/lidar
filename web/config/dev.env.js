@@ -5,5 +5,6 @@ module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
   // BASE_API: '"http://192.168.174.144:2222"', // api的base_url
   // BASE_API: '"http://119.29.186.141:8080"' // api的base_url
-  BASE_API: '"http://localhost:8080"'//
+  // BASE_API: '"http://localhost:8080"'//
+  BASE_API: '"http://192.168.2.104:8080"'//
 })

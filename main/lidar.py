@@ -83,7 +83,8 @@ class LidarHandle(object):
         """
         just for emulation test
         """
-        file_path = '/Users/mu/Desktop/lidar/store/data/txt/20171203164659.txt'
+        # file_path = '/Users/mu/Desktop/lidar/store/data/txt/20171203164659.txt'
+        file_path = '/mnt/hgfs/GitHub/lidardata/20171203164659.txt'
         fp = open(file_path, 'r+')
         content = fp.readlines()
         fp.close()
