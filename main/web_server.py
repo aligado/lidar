@@ -17,6 +17,8 @@ from analysis import car_analysis
 app = Flask(__name__)
 CORS(app)
 TEST = 1
+RELEASE_PATH = 'out'
+pack = os.path.join
 
 def gzipped(f):
     @functools.wraps(f)
@@ -141,6 +143,29 @@ def config():
     }
     return jsonify(content)
 '''
+
+@app.route('/file', methods=['GET'])
+def get_file():
+    file = request.args.get('file') 
+    fp = open(pack(RELEASE_PATH, file), 'r+')
+    content = json.loads(fp.read())
+    fp.close()
+    print 'get file', content
+    res = {
+        'code': 20000,
+        'data': content
+    }
+    return jsonify(res)
+
+@app.route('/release', methods=['GET'])
+def release():
+    content = os.listdir(RELEASE_PATH) 
+    print 'release path', content
+    res = {
+        'code': 20000,
+        'data': content
+    }
+    return jsonify(res)
 
 @app.route('/config', methods=['GET', 'POST'])
 def config():

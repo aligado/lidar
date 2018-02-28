@@ -4,7 +4,7 @@
 import time
 import os
 from datetime import datetime
-
+import json
 
 class FileHandle(object):
     def __init__(self):
@@ -14,7 +14,23 @@ class FileHandle(object):
         self.file_buf = ""
         self.path = 'out/'
 
-    def write(self, buf):
+    def write_json(self, buf):
+        self.file_write_cnt += 1
+        if self.file_buf == "":
+            self.file_buf = []
+        self.file_buf.append(buf)
+        print buf, self.file_write_cnt
+        if self.file_write_cnt >= self.max_cnt:
+            self.file_write_cnt = 0
+            now_tips = self.get_tips()
+            if now_tips != self.file_tips and self.suit_tips(now_tips):
+                fp = open(self.path + now_tips + '.txt', 'w+')
+                fp.write(json.dumps(self.file_buf))
+                fp.close()
+                self.file_buf = "" 
+                self.file_tips = now_tips
+
+    def write_buf(self, buf):
         self.file_write_cnt += 1
         self.file_buf += buf + '\n'
         print buf, self.file_write_cnt

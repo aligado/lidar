@@ -72,7 +72,7 @@ def car_analysis(ar, car_queue, web_car_queue):
                 print 'insert car'
             '''
             print 'car_res', car_res
-            car_file.write(json.dumps(car_res))
+            car_file.write_json(car_res)
             # web_car_queue.put(car_res)
         time.sleep(0.1)
 

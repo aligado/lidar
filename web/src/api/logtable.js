@@ -8,17 +8,32 @@ export function getLogTable(path) {
   })
 }
 
+export function getFile(file) {
+  return fetch({
+    url: '/file',
+    method: 'get',
+    params: { file }
+  })
+}
+
 export function getCar() {
   return fetch({
     url: '/car',
-    method: 'get',
+    method: 'get'
+  })
+}
+
+export function getRelease() {
+  return fetch({
+    url: '/release',
+    method: 'get'
   })
 }
 
 export function loadPara() {
   return fetch({
     url: '/config',
-    method: 'get',
+    method: 'get'
   })
 }
 
@@ -28,7 +43,7 @@ export function savePara(configData) {
     method: 'post',
     data: {
       configData
-    },
+    }
   })
 }
 

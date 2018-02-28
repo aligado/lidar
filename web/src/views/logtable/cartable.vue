@@ -1,6 +1,54 @@
 <template>
   <div class="app-container">
+    <div>
+      <el-button size="middle" type="success" @click="getRelease">刷新</el-button>
+    </div>    
     <div class="play-left">
+      <div class="table">
+        <el-table :data="releaseList" border fit highlight-current-row>
+          <el-table-column :min-width="20" align="center" label='ID'>
+            <template scope="scope">
+              {{scope.$index}}
+            </template>
+          </el-table-column>
+          <el-table-column :min-width="100" label="文件" align="center">
+            <template scope="scope">
+              {{scope.row.file}}
+            </template>
+          </el-table-column>
+          <el-table-column :min-width="60" label="操作" align="center">
+            <template scope="scope">
+              <el-button size="small" type="success" @click="getFile(scope.row.file)">查看
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
+    <div class="play-right">
+      <div class="table">
+        <el-table :data="carList" border fit highlight-current-row>
+          <el-table-column :min-width="20" align="center" label='ID'>
+            <template scope="scope">
+              {{scope.$index}}
+            </template>
+          </el-table-column>
+          <el-table-column :min-width="100" label="信息" align="center">
+            <template scope="scope">
+              {{scope.row.info}}
+            </template>
+          </el-table-column>
+          <el-table-column :min-width="60" label="操作" align="center">
+            <template scope="scope">
+              <el-button size="small" type="warning" @click="dialogCanvasVisible = true">查看
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
+    <el-dialog title="info" :visible.sync="dialogCanvasVisible" width="100%" fullscreen=false>
+      <!--
       <div class="canvas-container">
           <canvas id="cv" class="cv" width="900" height="400">
               Your browser does not support the canvas element.
@@ -11,56 +59,23 @@
           <div class="clear">
           </div>
       </div>
-      <div class="play-control">
-        <el-button-group>
-          <el-button type="danger" class="" @click="poweron">power on</el-button>
-          <el-button type="danger" class="" @click="shutdown">shut down</el-button>
-          <el-button type="primary" class="" @click="play">play</el-button>
-        </el-button-group>
-      </div>
-    </div>
-    <div class="play-right">
-      <div class="table">
-      <el-table :data="carList" border fit highlight-current-row>
-        <el-table-column :min-width="40" align="center" label='ID'>
-          <template scope="scope">
-            {{scope.$index}}
-          </template>
-        </el-table-column>
-        <el-table-column :min-width="140" label="车型" align="center">
-          <template scope="scope">
-            {{scope.row.info}}
-          </template>
-        </el-table-column>
-        <el-table-column :min-width="100" label="数量" align="center">
-          <template scope="scope">
-          </template>
-        </el-table-column>
-      </el-table>
-      </div>
-    </div>
+      -->
+  </el-dialog>
   </div>
 </template>
 
 <script>
-import { getCar, poweron, shutdown } from '@/api/logtable'
+import { getFile, getRelease, getCar, poweron, shutdown } from '@/api/logtable'
 
 let cnt = 0
 export default {
   data() {
     return {
+      dialogCanvasVisible: false,
       drawInterval: null,
       frame: null,
       analysis: 'null',
-      typeList: [
-        '小型客车',
-        '大型客车',
-        '小型货车',
-        '中型货车',
-        '大型货车',
-        '特大货',
-        '拖拉机',
-        '摩托车'
+      releaseList: [
       ],
       carList: [
       ],
@@ -83,6 +98,30 @@ export default {
         this.analysis = this.carQueue.shift()
         this.drawCar( this.analysis )
       }
+    },
+    getFile(file) {
+      getFile(file)
+        .then(res => {
+          console.log(res)
+          this.carList = []
+          for (let index in res.data) {
+            this.carList.push({'info': res.data[index]})
+          }
+        }, error => {
+          console.log(error)
+        })
+    },
+    getRelease() {
+      getRelease()
+        .then(res => {
+          console.log(res)
+          this.releaseList = []
+          for (let index in res.data) {
+            this.releaseList.push({'file': res.data[index]})
+          }
+        }, error => {
+          console.log(error)
+        })
     },
     poweron() {
       poweron()
@@ -145,12 +184,7 @@ export default {
     }
   },
   mounted() {
-    for (let i=0; i<this.typeList.length; i++) {
-      this.carList.push({
-        'info': this.typeList[i],
-        'num': 0
-      })
-    }
+    this.getRelease()
   }, 
   beforeDestroy() {
     clearInterval(this.drawInterval)
@@ -161,7 +195,8 @@ export default {
 <style>
 .play-left {
   float:left;
-  width: 915px;
+  padding-right: 20px;
+  width: 500px;
 }
 
 .canvas-container {
