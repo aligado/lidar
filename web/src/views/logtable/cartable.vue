@@ -40,7 +40,7 @@
           </el-table-column>
           <el-table-column :min-width="60" label="操作" align="center">
             <template scope="scope">
-              <el-button size="small" type="warning" @click="dialogCanvasVisible = true">查看
+              <el-button size="small" type="warning" @click="drawCar(scope.row.info)">查看
               </el-button>
             </template>
           </el-table-column>
@@ -48,7 +48,6 @@
       </div>
     </div>
     <el-dialog title="info" :visible.sync="dialogCanvasVisible" width="100%" fullscreen=false>
-      <!--
       <div class="canvas-container">
           <canvas id="cv" class="cv" width="900" height="400">
               Your browser does not support the canvas element.
@@ -59,7 +58,6 @@
           <div class="clear">
           </div>
       </div>
-      -->
   </el-dialog>
   </div>
 </template>
@@ -140,6 +138,8 @@ export default {
         })
     },
     drawCar(car) {
+      this.dialogCanvasVisible = true
+      this.analysis = car
       var canvas = document.getElementById('cv');
       if (canvas.getContext) {
           var ctx = canvas.getContext('2d');

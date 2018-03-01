@@ -24,7 +24,7 @@ class FileHandle(object):
             self.file_write_cnt = 0
             now_tips = self.get_tips()
             if now_tips != self.file_tips and self.suit_tips(now_tips):
-                fp = open(self.path + now_tips + '.txt', 'w+')
+                fp = open(self.path + now_tips + '.json', 'w+')
                 fp.write(json.dumps(self.file_buf))
                 fp.close()
                 self.file_buf = "" 
