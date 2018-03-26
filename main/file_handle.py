@@ -43,6 +43,9 @@ class FileHandle(object):
                 fp.close()
                 self.file_buf = ''
                 self.file_tips = now_tips
+    
+    def tcp_client(self, buf):
+        pass
 
     @staticmethod
     def get_tips():
