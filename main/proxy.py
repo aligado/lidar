@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 import struct
 import socket
+import binascii
 
 class CarData(object):
     template = 'AAAAEA000130303731313534333133303130303037533231364C323537313130323239000001E2070319051401060B000100000D00100000000000000000000000000100090000000000000000000C000000000000000000000000000000000000000000000000000000000000000D000000000000000000000000000000000000000000000000000000000000001F000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000210510000009002C03002100000001003200000000000000000000000000000024F9EEEE' 
@@ -34,9 +35,38 @@ class CarData(object):
         "EEEE" #-1 数据包结尾
     ]
     def __init__(self):
-        print(self.sample[13])
-        print(len(self.sample[13]))
+        # print(self.sample[13])
+        # print(len(self.sample[13]))
+        self.device_id = '0011110206090001'
+        self.station_number = 'G102L206120225'
+        self.now_mess = []
         pass
+
+    def pack_message(self):
+        self.now_mess = [
+            "AAAA", #0 前缀 
+            "EA00", #1 包长度
+            "01", #2 包类型
+            "30303731313534333133303130303037", #3 设备ID 0011110206090001
+            "533231364C32353731313032323900", #4 站点号
+            "00", #5 设备硬件错误码
+            "01", #6 调查内容，调查所有项目
+            "E207", #7 年份
+            "03", #8 月份
+            "19", #9 日期
+            "05", #10 交通数据处理周期
+            "7100", #11 时间序号
+            "06", #12 车道数
+        ]
+        convert = binascii.b2a_hex
+        self.now_mess[3] = convert(self.device_id)
+        print 'device_id', self.now_mess[3]
+        self.now_mess[4] = convert(self.station_number)
+        while len(self.now_mess[4])<30:
+            self.now_mess[4] += '00'
+        print 'station_number', self.now_mess[4]
+
+
 
     def hex(self):
         data = self.template
@@ -67,6 +97,11 @@ def test(argv):
     cardata = CarData()
     # print cardata.template[0:2].decode('hex')
 
+def test2(argv):
+    cardata = CarData()
+    cardata.pack_message()
+    # print cardata.template[0:2].decode('hex')
+
 def test1(argv):
     print 'test'
     cardata = CarData()
@@ -87,4 +122,5 @@ def test1(argv):
 
 if __name__ == '__main__':
     import sys
-    sys.exit(test(sys.argv))
+    # sys.exit(test(sys.argv))
+    sys.exit(test2(sys.argv))
