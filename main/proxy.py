@@ -43,6 +43,17 @@ class CarData(object):
         pass
 
     def pack_message(self):
+        def ten2hex(num):
+            res = ""
+            while num:
+                temp = num % 256
+                temp = hex(temp)[2:]
+                while len(temp)<2:
+                    temp = "0" + temp
+                res += temp
+                num //= 256
+            return res
+
         self.now_mess = [
             "AAAA", #0 前缀 
             "EA00", #1 包长度
@@ -66,6 +77,14 @@ class CarData(object):
             self.now_mess[4] += '00'
         print 'station_number', self.now_mess[4]
 
+        self.now_mess[7] = ten2hex(2018)
+        print 'year', self.now_mess[7]
+        self.now_mess[8] = ten2hex(3)
+        print 'month', self.now_mess[8]
+        self.now_mess[9] = ten2hex(22)
+        print 'day', self.now_mess[9]
+        self.now_mess[11] = ten2hex(24*60//5)
+        print 'period', self.now_mess[11]
 
 
     def hex(self):
@@ -89,8 +108,6 @@ class CarData(object):
     
     def tcp_client(self, buf):
         pass
-
-
 
 def test(argv):
     print 'test'
