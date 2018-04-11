@@ -9,6 +9,23 @@ import struct
 import socket
 import binascii
 
+def ten2hex(num, hex_len = None):
+    res = ""
+    while num:
+        temp = num % 256
+        temp = hex(temp)[2:]
+        while len(temp)<2:
+            temp = "0" + temp
+        res += temp
+        num //= 256
+    if hex_len:
+        while hex_len > len(res):
+            res = res + '0'
+    return res
+
+
+convert = binascii.b2a_hex
+
 class CarData(object):
     template = 'AAAAEA000130303731313534333133303130303037533231364C323537313130323239000001E2070319051401060B000100000D00100000000000000000000000000100090000000000000000000C000000000000000000000000000000000000000000000000000000000000000D000000000000000000000000000000000000000000000000000000000000001F000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000210510000009002C03002100000001003200000000000000000000000000000024F9EEEE' 
     sample = [
@@ -37,29 +54,16 @@ class CarData(object):
     def __init__(self):
         # print(self.sample[13])
         # print(len(self.sample[13]))
-        self.device_id = '0011110206090001'
-        self.station_number = 'G102L206120225'
-        self.now_mess = []
-        pass
-
-    def pack_message(self):
-        def ten2hex(num):
-            res = ""
-            while num:
-                temp = num % 256
-                temp = hex(temp)[2:]
-                while len(temp)<2:
-                    temp = "0" + temp
-                res += temp
-                num //= 256
-            return res
-
+        self.device_id = "0021140306120001" # '0011110206090001'
+        # self.device_id = '0011110206090001'
+        self.station_number = "S227J205320584" # 'G102L206120225'
+        # self.station_number = 'S216L257110229'
         self.now_mess = [
             "AAAA", #0 前缀 
             "EA00", #1 包长度
             "01", #2 包类型
-            "30303731313534333133303130303037", #3 设备ID 0011110206090001
-            "533231364C32353731313032323900", #4 站点号
+            "", #3 设备ID 0011110206090001
+            "", #4 站点号
             "00", #5 设备硬件错误码
             "01", #6 调查内容，调查所有项目
             "E207", #7 年份
@@ -68,23 +72,38 @@ class CarData(object):
             "05", #10 交通数据处理周期
             "7100", #11 时间序号
             "06", #12 车道数
+            "0B00000000000000000000000000000000000000000000000000000000000000",
+            "0C00000000000000000000000000000000000000000000000000000000000000",
+            "0D00000000000000000000000000000000000000000000000000000000000000",
+            "1F00000000000000000000000000000000000000000000000000000000000000",
+            "2000000000000000000000000000000000000000000000000000000000000000",
+            "2100000000000000000000000000000000000000000000000000000000000000",
+            "24F9",
+            "EEEE"
         ]
-        convert = binascii.b2a_hex
         self.now_mess[3] = convert(self.device_id)
         print 'device_id', self.now_mess[3]
         self.now_mess[4] = convert(self.station_number)
         while len(self.now_mess[4])<30:
             self.now_mess[4] += '00'
-        print 'station_number', self.now_mess[4]
 
-        self.now_mess[7] = ten2hex(2018)
+    def pack_message(self, mess):
+        self.now_mess[7] = ten2hex(mess['year'], 4)
         print 'year', self.now_mess[7]
-        self.now_mess[8] = ten2hex(3)
+        self.now_mess[8] = ten2hex(mess['month'], 2)
         print 'month', self.now_mess[8]
-        self.now_mess[9] = ten2hex(22)
+        self.now_mess[9] = ten2hex(mess['day'], 2)
         print 'day', self.now_mess[9]
-        self.now_mess[11] = ten2hex(24*60//5)
-        print 'period', self.now_mess[11]
+        minutes = mess['hour']*60 + mess['minute']
+        periods = minutes // 5 + 1
+        self.now_mess[11] = ten2hex(periods, 4)
+        print 'periods', self.now_mess[11]
+        for index, car_mess in enumerate(mess['car']):
+            print index, car_mess
+            car_num = car_mess['total']
+            temp = self.now_mess[13+index]
+            self.now_mess[13+index] = temp[0:10] + ten2hex(car_num, 4) + temp[14:]
+        return ''.join(self.now_mess)
 
 
     def hex(self):
@@ -116,7 +135,42 @@ def test(argv):
 
 def test2(argv):
     cardata = CarData()
-    cardata.pack_message()
+    mess = {
+        'year': 2018,
+        'month': 4,
+        'day': 11,
+        'hour': 8,
+        'minute': 6,
+        'car': [
+            {
+                'total': 1
+            },
+            {
+                'total': 2
+            },
+            {
+                'total': 3
+            },
+            {
+                'total': 3
+            },
+            {
+                'total': 2
+            },
+            {
+                'total': 1
+            },
+        ]
+    }
+    temp =  cardata.pack_message(mess)
+    print temp, len(temp) 
+    print cardata.template, len(cardata.template) 
+    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    s.connect(('121.52.216.242', 3132))
+    # temp = cardata.template
+    s.send(temp.decode('hex'))
+    data = s.recv(1024)
+    print data.encode('hex')
     # print cardata.template[0:2].decode('hex')
 
 def test1(argv):
