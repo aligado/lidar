@@ -5,6 +5,7 @@ import time
 import os
 from datetime import datetime
 import json
+from proxy import send_msg 
 
 class FileHandle(object):
     def __init__(self):
@@ -13,6 +14,36 @@ class FileHandle(object):
         self.max_cnt = 5
         self.file_buf = ""
         self.path = 'out/'
+        self.lane_car = [
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            }
+        ]
+    
+    @classmethod
+    def parse_mess(cls, json_data):
+        res = [{
+            'total': 0
+        }]*6
+        for car_data in json_data:
+            lane_id = car_data['lane_id']
+            res[lane_id]['total'] += 1
+        return res
 
     def write_json(self, buf):
         self.file_write_cnt += 1
@@ -27,6 +58,7 @@ class FileHandle(object):
                 fp = open(self.path + now_tips + '.json', 'w+')
                 fp.write(json.dumps(self.file_buf))
                 fp.close()
+                send_msg(self.file_buf)
                 self.file_buf = "" 
                 self.file_tips = now_tips
 

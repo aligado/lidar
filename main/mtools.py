@@ -57,9 +57,9 @@ class AllConfig(object):
     ftp_path = ''
 
     @staticmethod
-    def read_config_file(path="lidar.conf"):
-        temp_conf = load_config("lidar.conf")
+    def read_config_file(config_file_path="lidar.json"):
         #print temp_conf
+        temp_conf = load_config(config_file_path)
         AllConfig.lane_max = temp_conf['lane_max']
         AllConfig.lane_num = temp_conf['lane_num']
         AllConfig.lane_min = temp_conf['lane_min']

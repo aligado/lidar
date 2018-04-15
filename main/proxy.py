@@ -128,6 +128,47 @@ class CarData(object):
     def tcp_client(self, buf):
         pass
 
+def send_msg(car_mess):
+    cardata = CarData()
+    mess = {
+        'year': 2018,
+        'month': 4,
+        'day': 11,
+        'hour': 8,
+        'minute': 6,
+        'car': [
+            {
+                'total': 1
+            },
+            {
+                'total': 2
+            },
+            {
+                'total': 3
+            },
+            {
+                'total': 3
+            },
+            {
+                'total': 2
+            },
+            {
+                'total': 1
+            },
+        ]
+    }
+    mess['car'] = car_mess
+    temp =  cardata.pack_message(mess)
+    print temp, len(temp) 
+    print cardata.template, len(cardata.template) 
+    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    s.connect(('121.52.216.242', 3132))
+    # temp = cardata.template
+    s.send(temp.decode('hex'))
+    data = s.recv(1024)
+    print data.encode('hex')
+    # print cardata.template[0:2].decode('hex')
+
 def test(argv):
     print 'test'
     cardata = CarData()
