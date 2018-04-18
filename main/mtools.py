@@ -17,7 +17,14 @@ from multiprocessing import Queue
 # frame_info_queue = Queue()
 # error_frame = 0
 queue = Queue()
+
 PI = math.pi
+
+class LidarMsg(object):
+    scancfg = "sRN LMPscancfg"
+    scandata = "sRN LMDscandata"
+    scandata1 = "sEN LMDscandata 1"
+    scandata0 = "sEN LMDscandata 0"
 
 def load_config(path):
     f = open(path, 'r+')
