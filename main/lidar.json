@@ -33,12 +33,12 @@
     ],
     "lidar_end_angle": 0,
     "lane_num": 6,
-    "host": "192.168.0.1",
+    "host": "127.0.0.1",
     "lidar_hz": 25,
     "ftppath": "/",
     "lidar_fix_angle": -5,
     "bufsize": 2048,
     "lidar_resolution": 0.5,
-    "port": 2111,
+    "port": 9999,
     "desc": "hello world"
 }

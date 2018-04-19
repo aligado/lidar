@@ -12,7 +12,8 @@ import sys
 import gzip
 import os
 from multiprocessing import Process, Array
-from mtools import hexstr2int, queue, AllConfig
+import threading
+from mtools import hexstr2int, queue, AllConfig, LidarMsg
 from datetime import datetime
 
 __author__ = 'alpc32'
@@ -49,27 +50,38 @@ class LidarSimulate(object):
                     self.lidar_log_list.append(line.split('\n')[0])
         self.lidar_log_len = len(self.lidar_log_list)
         
-        print 'lidar_log_list', self.lidar_log_list
+        print 'lidar_log_list[0:2]', self.lidar_log_list[0:2]
 
     def poweron(self):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        s.bind(('127.0.0.1', 9999))
+        s.bind(('127.0.0.1', self.port))
 
-        s.listen(10)
+        s.listen(5)
         print 'Waiting for connection...'
 
         def tcplink(sock, addr):
             print 'Accept new connection from %s:%s...' % addr
+            '''
             def tcp_send(sock):
                 for i in range(100)
                     sock.send('hello')
                     time.sleep(0.1)
                 pass
+            '''
             while True:
                 data = sock.recv(1024)
                 print data
+                if data == LidarMsg.scandata1:
+                    print 'simu scandata1'
+                    for line in self.lidar_log_list:
+                        print 'line', line
+                        sock.send(line)
+                        time.sleep(0.1)
+                    return
+                else:
+                    sock.send('o')
                 time.sleep(0.1)
             sock.close()
             print 'Connection from %s:%s closed.' % addr
@@ -82,276 +94,13 @@ class LidarSimulate(object):
             t.daemon = True
             t.start()
 
-
-    def close(self):
-        """
-        关闭雷达连接
-        """
-        self.s.close()
-
-    def scandata(self):
-        """
-        获取单个雷达扫描帧
-        """
-        self.s.send("sRN LMDscandata")
-        buf = self.s.recv(2048)
-        queue.put(buf)
-    
-    @classmethod
-    def open_test(cls, ar, queue):
-        """
-        just for emulation test
-        """
-        # file_path = '/Users/mu/Desktop/lidar/store/data/txt/20171203164659.txt'
-        file_path = '/mnt/hgfs/GitHub/lidardata/20171203164659.txt'
-        fp = open(file_path, 'r+')
-        content = fp.readlines()
-        fp.close()
-
-        index = 0
-        content_len = len(content)
-        while True:
-            # print "lidar process"
-            if ar[0] == 0:
-                print "get exit cmd"
-                return
-            buf = content[index]
-            print buf[0:10]
-            queue.put(buf)
-            time.sleep(0.2)
-            index = (index + 1) % content_len
-
-    def open_scandata1(self, ar):
-        """
-        获取雷达连续扫描数据
-        """
-        self.s.send("sEN LMDscandata 1")
-        while True:
-            # print "lidar process"
-            if ar[0] == 0:
-                print "get exit cmd"
-                return
-            buf = self.s.recv(2048)
-            # print buf
-            queue.put(buf)
-
-    def close_scandata1(self, ar):
-        """
-        发送关闭连续获取数据命令
-        首先停掉读取进程然后在关闭tcp连接
-        否则容易无法退出连接
-        """
-        self.s.send("sEN LMDscandata 0")
-        ar[0] = 0
-        time.sleep(2)
-
-
-# just for test below
-def main():
-    AllConfig.read_config_file()
-    lidar = LidarHandle(AllConfig.host, AllConfig.port)
-    lidar.connect()
-
-    # print queue.qsize()
-    scan_flag = Array('i', 1)
-    scan_flag[0] = 1
-
-    # 雷达驱动线程
-    scandata1_process = Process(target=lidar.open_scandata1, args=(scan_flag, ))
-    scandata1_process.start()
-
-    # tcp队列预处理线程
-    frame_process = Process(target=process_frame, args=(scan_flag, ))
-    frame_process.start()
-
-    time.sleep(20)
-    lidar.close_scandata1(scan_flag)
-    print queue.qsize()
-
-
-def frametest():
-    AllConfig.read_config_file()
-
-    scan_flag = Array('i', 1)
-    scan_flag[0] = 1
-
-    def txt2frame():
-        for frame in open('rec.txt'):
-            queue.put(frame)
-            time.sleep(1)
-            # print queue.get()
-            # return
-
-    # 雷达驱动线程
-    scandata1_process = Process(target=txt2frame)
-    scandata1_process.start()
-
-    # tcp队列预处理线程
-    frame_process = Process(target=process_frame, args=(scan_flag, ))
-    frame_process.start()
-
-    # 分型算法线程
-    # analysis_process = Process(target = process_queue, args = (scan_flag, ))
-    # analysis_process.start()
-
-
-def test():
-    """
-    模块单元测试
-    """
-    AllConfig.read_config_file()
-    lidar = LidarHandle(AllConfig.host, AllConfig.port)
-    lidar.connect()
-
-    def print_queue(ar):
-        while True:
-            while not queue.empty():
-                buf = queue.get()
-                print buf[0:20]
-            if ar[0] == 0:
-                return
-            time.sleep(0.1)
-
-    # print queue.qsize()
-    scan_flag = Array('i', 1)
-    scan_flag[0] = 1
-    scandata1_process = Process(target=lidar.open_scandata1,
-                                args=(scan_flag, ))
-    scandata1_process.daemon = True
-    scandata1_process.start()
-
-    print_process = Process(target=print_queue, args=(scan_flag, ))
-    print_process.daemon = True
-    print_process.start()
-
-    time.sleep(2)
-    lidar.close_scandata1(scan_flag)
-    lidar.close()
-    time.sleep(5)
-
-
-def unittest():
-    """
-    模块单元测试
-    """
-    AllConfig.read_config_file()
-    lidar = LidarHandle(AllConfig.host, AllConfig.port)
-    lidar.connect()
-
-    def print_queue(ar):
-        while True:
-            while not queue.empty():
-                print queue.get()
-                print ""
-            if ar[0] == 0:
-                return
-            time.sleep(0.2)
-
-    # print queue.qsize()
-    scan_flag = Array('i', 1)
-    while True:
-        scan_flag[0] = 1
-        scandata1_process = Process(target=lidar.open_scandata1,
-                                    args=(scan_flag, ))
-        scandata1_process.start()
-
-        frame_process = Process(target=process_frame, args=(scan_flag, ))
-        frame_process.start()
-
-        # print_process = Process(target=print_queue, args=(scan_flag, ))
-        # print_process.start()
-
-        time.sleep(36000)
-        lidar.close_scandata1(scan_flag)
-        time.sleep(60)
-
-
-def get_one_frame():
-    AllConfig.read_config_file()
-    lidar = LidarHandle(AllConfig.host, AllConfig.port)
-    lidar.connect()
-    for i in range(0, 3):
-        lidar.scandata()
-    # f = open('one_frame.txt', 'w+')
-    scan_flag = Array('i', 1)
-    scan_flag[0] = 1
-    process_frame(scan_flag)
-    while not queue.empty():
-        print queue.get()
-        print ""
-
-
-def record_lidar_frame():
-    """
-    雷达帧保存到本地
-    """
-    AllConfig.read_config_file()
-    lidar = LidarHandle(AllConfig.host, AllConfig.port)
-    lidar.connect()
-    frame_num = 15000
-
-    def print_queue(ar):
-        while True:
-            f_name = datetime.now().strftime("%Y%m%d%H%M%S")
-            fp = gzip.open('out/'+f_name+'.txt.gz', 'wb')
-            fp_cnt = 0
-            while fp_cnt < frame_num:
-                while (not queue.empty()) and (fp_cnt < frame_num):
-                    if fp_cnt % 100 == 0:
-                        print "get_frame ", fp_cnt
-                    fp.write(queue.get())
-                    fp.write('\n')
-                    fp_cnt += 1
-                    if ar[0] == 0:
-                        fp.close()
-                        return
-                if fp_cnt >= frame_num:
-                    print f_name, 'close'
-                    fp.close()
-                    break
-            time.sleep(1)
-
-    # print queue.qsize()
-    scan_flag = Array('i', 1)
-    scan_flag[0] = 1
-    scandata1_process = Process(target=lidar.open_scandata1,
-                                args=(scan_flag, ))
-    scandata1_process.start()
-
-    record_process = Process(target=print_queue, args=(scan_flag, ))
-    record_process.start()
-
-    time.sleep(3600)
-    lidar.close_scandata1(scan_flag)
-    time.sleep(3)
-
-
 def cli(argv):
     """
     """
     print(argv)
-    if argv[1] == 'record':
-        record_lidar_frame()
-    if argv[1] == 'test':
-        max_cnt = 100
-        cnt = 0
-        while cnt < max_cnt:
-            test()
-            cnt += 1
-            print 'done ', cnt
-            time.sleep(5)
-
-    if argv[1] == 'sim':
-        scan_flag = Array('i', 1)
-        scan_flag[0] = 1
-        LidarHandle.open_test(scan_flag, '/Users/mu/Desktop/lidar/store/data/txt/20171203164659.txt', queue)
-
+    lidar_simulate = LidarSimulate(9999)
+    lidar_simulate.add_data('/media/psf/share/lidar/data')
+    lidar_simulate.poweron()
 
 if __name__ == '__main__':
-    # import sys
-    # sys.exit(get_one_frame(sys.argv))
-    # sys.exit(main(sys.argv))
-    # sys.exit(maintest(sys.argv))
-    # sys.exit(frametest(sys.argv))
-    # sys.exit(unittest(sys.argv))
     cli(sys.argv)
