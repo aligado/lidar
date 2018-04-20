@@ -113,7 +113,7 @@ class LidarHandle(object):
                 print "get exit cmd"
                 return
             buf = self.s.recv(2048)
-            print buf
+            print buf[0:10]
             queue.put(buf)
 
     def close_scandata1(self, ar):

@@ -10,6 +10,8 @@ import math
 from file_handle import FileHandle
 from mtools import queue, hexstr2int, AllConfig, PI
 import json
+import cv2
+import numpy as np
 
 
 def car_analysis(ar, car_queue, web_car_queue):
@@ -23,6 +25,18 @@ def car_analysis(ar, car_queue, web_car_queue):
     车辆平均高度,方差,波形长度,车道id
     """
     car_file = FileHandle()
+
+    def cv_draw(info_list):
+        image_content = np.zeros((720, 1280, 3), np.uint8)
+        print('car_draw')
+        step = 30
+        for index, y in enumerate(info_list):
+            x = step*index+2
+            y = 720 - y*2
+            image_content[ y:y+1, x:x+1] = (0, 0, 255)
+        cv2.imshow('cvcar', image_content)
+        k = cv2.waitKey(20)
+
     while True:
         if ar[0] == 0:
             print 'close car analysis'
@@ -65,6 +79,7 @@ def car_analysis(ar, car_queue, web_car_queue):
                 'max_height': max_height,
                 'average_q': average_q
             }
+            cv_draw(info_list)
             '''
             print 'web_car_queue', web_car_queue.qsize()
             if web_car_queue.qsize < 5000:

@@ -10,6 +10,8 @@ import time
 import math
 # from file_handle import FileHandle
 from mtools import hexstr2int, AllConfig
+import numpy as np
+import cv2
 
 PI = math.pi
 hex2int = hexstr2int
@@ -78,11 +80,35 @@ class CarInfo(object):
 
 
 def get_frame_info(buf, car_info):
+
     """
     @buf 雷达split之后的侦数据
     @car_info  单个车辆的雷数信息
     将帧的信息分为6个车道进行处理
     """
+    def cv_draw(xdata, ydata):
+        image_content = np.zeros((720, 1280, 3), np.uint8)
+        print('frame_draw')
+        for index, h in enumerate(AllConfig.lane_horizon):
+            lane_min = AllConfig.lane_min[index] + 2000
+            lane_max = AllConfig.lane_max[index] + 2000
+            x1 = 1280*lane_min/4000
+            x2 = 1280*lane_max/4000
+            y = 720*(AllConfig.lane_horizon[index]+100)/2000
+            image_content[ y-10:y+10, x1-1:x1+1 ] = (255, 255, 0)
+            image_content[ y-10:y+10, x2-1:x2+1 ] = (255, 255, 0)
+            image_content[ y:y+1, x1:x2+1 ] = (255, 255, 0)
+
+        for index, x in enumerate(xdata):
+            y = ydata[index]
+            x += 2000
+            y += 100
+            x = 1280*x/4000
+            y = 720*y/2000
+            image_content[ y:y+1, x:x+1] = (0, 0, 255)
+        cv2.imshow('cvdraw', image_content)
+        k = cv2.waitKey(20)
+
     xdata, ydata = [], []  # 单侦雷达数据的二维点阵
     buf_len = len(buf)
 
@@ -119,12 +145,15 @@ def get_frame_info(buf, car_info):
         xdata.append(temp_x)
         ydata.append(temp_y)
 
+
         # 遍历6个车道，找到每个车道最高点
         for lane_index in range(0, 6):
             if temp_x >= AllConfig.lane_min[lane_index] and temp_x <= AllConfig.lane_max[lane_index]:
                 # if temp_y > 50 and temp_y < height[lane_index]:
                 if temp_y < height[lane_index]:
                     height[lane_index] = temp_y
+
+    cv_draw(xdata, ydata)
 
     analysis_list = ['null']*6
     for lane_index in range(0, 6):

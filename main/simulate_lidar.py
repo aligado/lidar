@@ -76,7 +76,7 @@ class LidarSimulate(object):
                 if data == LidarMsg.scandata1:
                     print 'simu scandata1'
                     for line in self.lidar_log_list:
-                        print 'line', line
+                        print 'line', line[0:10]
                         sock.send(line)
                         time.sleep(0.1)
                     return

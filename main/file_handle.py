@@ -50,7 +50,7 @@ class FileHandle(object):
         if self.file_buf == "":
             self.file_buf = []
         self.file_buf.append(buf)
-        print buf, self.file_write_cnt
+        print 'write_json', buf, self.file_write_cnt
         if self.file_write_cnt >= self.max_cnt:
             self.file_write_cnt = 0
             now_tips = self.get_tips()
@@ -58,7 +58,7 @@ class FileHandle(object):
                 fp = open(self.path + now_tips + '.json', 'w+')
                 fp.write(json.dumps(self.file_buf))
                 fp.close()
-                send_msg(self.file_buf)
+                # send_msg(self.file_buf)
                 self.file_buf = "" 
                 self.file_tips = now_tips
 
