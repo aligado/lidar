@@ -24,12 +24,17 @@ class CarInfo(object):
     """
     threshold_num = AllConfig.threshold_num  # 连续点阈值
     threshold_height = AllConfig.threshold_height  # 高度阈值
+    # threshold_height = 32  # 高度阈值
+    # threshold_num = 2  # 连续点阈值
 
     def __init__(self, id):
         self.info_list = []  # 车辆波形数组
         self.horizon_line = 0  # 车道水平线,修正高度
         self.under_cnt = 0  # 连续空白无车辆计数
         self.id = id  # 车道id
+        print 'threshold', self.threshold_num, self.threshold_height
+        # print AllConfig.threshold_height
+        # print AllConfig.threshold_num
 
     def insert_frame_info(self, height, width=0):
         """
@@ -38,6 +43,7 @@ class CarInfo(object):
         # 由于雷达倒装
         # 车的高度等于标定水平线减去
         height = self.horizon_line - height
+        # print 'horizon_line', self.horizon_line, height, self.id
         self.info_list.append(height)
         '''
         print('insert', height)
@@ -72,10 +78,11 @@ class CarInfo(object):
         if begin+self.threshold_num < end:
             info_list = info_list[begin:end]
             # info_len = len(info_list)
-            return {
-                'id': self.id,
-                'info_list': info_list,
-            }
+            if len(info_list) > 6:
+                return {
+                    'id': self.id,
+                    'info_list': info_list,
+                }
         return 'null'
 
 
@@ -87,14 +94,15 @@ def get_frame_info(buf, car_info):
     将帧的信息分为6个车道进行处理
     """
     def cv_draw(xdata, ydata):
-        image_content = np.zeros((720, 1280, 3), np.uint8)
-        print('frame_draw')
+        image_content = np.zeros((400, 1280, 3), np.uint8)
+        # print('frame_draw')
+        image_content[ 0:0+5, 640:640+2 ] = (0, 255, 255)
         for index, h in enumerate(AllConfig.lane_horizon):
             lane_min = AllConfig.lane_min[index] + 2000
             lane_max = AllConfig.lane_max[index] + 2000
             x1 = 1280*lane_min/4000
             x2 = 1280*lane_max/4000
-            y = 720*(AllConfig.lane_horizon[index]+100)/2000
+            y = 400*(AllConfig.lane_horizon[index])/1000
             image_content[ y-10:y+10, x1-1:x1+1 ] = (255, 255, 0)
             image_content[ y-10:y+10, x2-1:x2+1 ] = (255, 255, 0)
             image_content[ y:y+1, x1:x2+1 ] = (255, 255, 0)
@@ -102,9 +110,8 @@ def get_frame_info(buf, car_info):
         for index, x in enumerate(xdata):
             y = ydata[index]
             x += 2000
-            y += 100
             x = 1280*x/4000
-            y = 720*y/2000
+            y = 400*y/1000
             image_content[ y:y+1, x:x+1] = (0, 0, 255)
         cv2.imshow('cvdraw', image_content)
         k = cv2.waitKey(20)
@@ -121,8 +128,10 @@ def get_frame_info(buf, car_info):
     end = min(26+num_len, buf_len)
     height = [AllConfig.unuse_height]*6
 
+    lidar_fix_angle = AllConfig.lidar_fix_angle
+    lidar_fix_angle = 0
     for i in range(26, end):
-        angle = ((i - 26 + AllConfig.lidar_fix_angle) * 0.5 + 0) * PI / 180.0
+        angle = ((i - 26 + lidar_fix_angle) * 0.5 + 0) * PI / 180.0
         vle = hex2int(buf[i]) / 10.0
 
         # if vle < 100:
@@ -130,6 +139,7 @@ def get_frame_info(buf, car_info):
 
         temp_x = math.cos(angle) * vle
         temp_y = math.sin(angle) * vle
+        '''
         if temp_x < -2000:
             temp_x = -2000
         elif temp_x > 2000:
@@ -139,6 +149,7 @@ def get_frame_info(buf, car_info):
             temp_y = 0
         elif temp_y > 1000:
             temp_y = 1000
+        '''
         temp_y = int(temp_y)
 
         # 添加二维点
@@ -149,8 +160,9 @@ def get_frame_info(buf, car_info):
         # 遍历6个车道，找到每个车道最高点
         for lane_index in range(0, 6):
             if temp_x >= AllConfig.lane_min[lane_index] and temp_x <= AllConfig.lane_max[lane_index]:
-                # if temp_y > 50 and temp_y < height[lane_index]:
-                if temp_y < height[lane_index]:
+                if temp_y > 50 and temp_y < height[lane_index]:
+                # if temp_y < height[lane_index]:
+                    # print 'temp_y', temp_y
                     height[lane_index] = temp_y
 
     cv_draw(xdata, ydata)

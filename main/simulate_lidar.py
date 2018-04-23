@@ -43,6 +43,8 @@ class LidarSimulate(object):
         self.lidar_log_list = []
         log_file_list = os.listdir(path)
         for log_file in log_file_list:
+            if log_file.find('.txt') == -1:
+                continue
             log_file_path = os.path.join(path, log_file)
             with open(log_file_path, 'r+') as fp:
                 lines = fp.readlines()
@@ -76,9 +78,9 @@ class LidarSimulate(object):
                 if data == LidarMsg.scandata1:
                     print 'simu scandata1'
                     for line in self.lidar_log_list:
-                        print 'line', line[0:10]
+                        print 'line', line[0:20]
                         sock.send(line)
-                        time.sleep(0.1)
+                        time.sleep(0.03)
                     return
                 else:
                     sock.send('o')

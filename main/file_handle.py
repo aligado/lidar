@@ -37,12 +37,30 @@ class FileHandle(object):
     
     @classmethod
     def parse_mess(cls, json_data):
-        res = [{
-            'total': 0
-        }]*6
+        res = [
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            },
+            {
+                'total': 0
+            }
+        ]
         for car_data in json_data:
             lane_id = car_data['lane_id']
             res[lane_id]['total'] += 1
+        print res
         return res
 
     def write_json(self, buf):
@@ -58,7 +76,9 @@ class FileHandle(object):
                 fp = open(self.path + now_tips + '.json', 'w+')
                 fp.write(json.dumps(self.file_buf))
                 fp.close()
-                # send_msg(self.file_buf)
+                temp = self.parse_mess(self.file_buf)
+                print temp
+                send_msg(temp)
                 self.file_buf = "" 
                 self.file_tips = now_tips
 
@@ -85,6 +105,7 @@ class FileHandle(object):
 
     @staticmethod
     def suit_tips(tips):
+        # return True
         return tips[-1] == '0' or tips[-1] == '5'
         # return int(tips[-1]) % 2 == 0
 

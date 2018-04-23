@@ -108,12 +108,12 @@ class LidarHandle(object):
         """
         self.s.send("sEN LMDscandata 1")
         while True:
-            print "lidar process"
+            # print "lidar process"
             if ar[0] == 0:
                 print "get exit cmd"
                 return
             buf = self.s.recv(2048)
-            print buf[0:10]
+            print buf[0:20]
             queue.put(buf)
 
     def close_scandata1(self, ar):

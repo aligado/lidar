@@ -49,8 +49,8 @@ class AllConfig(object):
     lane_min = [0]*6 # 车道边界最小值
     lane_max = [0]*6 # 车道边界最大值
     lane_horizon = [0]*6 # 车道水平线相对倒装雷达
-    threshold_num = 5 # 间隔阈值
-    threshold_height = 12 # 车辆触发高度阈值
+    threshold_num = 2# 间隔阈值
+    threshold_height = 33 # 车辆触发高度阈值
     lidar_fix_angle = 0 # 雷达修正角度
     unuse_height = 0
     lidar_hz = 0
@@ -67,6 +67,7 @@ class AllConfig(object):
     def read_config_file(config_file_path="lidar.json"):
         #print temp_conf
         temp_conf = load_config(config_file_path)
+        print 'temp_conf', temp_conf
         AllConfig.lane_max = temp_conf['lane_max']
         AllConfig.lane_num = temp_conf['lane_num']
         AllConfig.lane_min = temp_conf['lane_min']

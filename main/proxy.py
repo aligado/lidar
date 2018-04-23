@@ -157,16 +157,32 @@ def send_msg(car_mess):
             },
         ]
     }
+    now_time = datetime.now()
+    mess['year'] = now_time.year
+    mess['month'] = now_time.month
+    mess['day'] = now_time.day
+    mess['hour'] = now_time.hour
+    mess['minute'] = now_time.minute
+
     mess['car'] = car_mess
     temp =  cardata.pack_message(mess)
-    print temp, len(temp) 
-    print cardata.template, len(cardata.template) 
-    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    s.connect(('121.52.216.242', 3132))
-    # temp = cardata.template
-    s.send(temp.decode('hex'))
-    data = s.recv(1024)
-    print data.encode('hex')
+    send_cnt = 0
+    while send_cnt < 10:
+        try:
+            print temp, len(temp) 
+            # print cardata.template, len(cardata.template) 
+            s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+            s.connect(('121.52.216.242', 3132))
+            # temp = cardata.template
+            s.send(temp.decode('hex'))
+            data = s.recv(1024)
+            print data.encode('hex')
+            s.close()
+            break
+        except Exception as identifier:
+            print identifier, 'Error'
+            send_cnt += 1
+            time.sleep(5)
     # print cardata.template[0:2].decode('hex')
 
 def test(argv):
@@ -206,12 +222,17 @@ def test2(argv):
     temp =  cardata.pack_message(mess)
     print temp, len(temp) 
     print cardata.template, len(cardata.template) 
-    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    s.connect(('121.52.216.242', 3132))
-    # temp = cardata.template
-    s.send(temp.decode('hex'))
-    data = s.recv(1024)
-    print data.encode('hex')
+    try:
+        s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+
+        s.connect(('121.52.216.242', 3132))
+        # temp = cardata.template
+        s.send(temp.decode('hex'))
+        data = s.recv(1024)
+        print data.encode('hex')
+        s.close()
+    except expression as identifier:
+        print 'Error'
     # print cardata.template[0:2].decode('hex')
 
 def test1(argv):

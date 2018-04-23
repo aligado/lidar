@@ -75,7 +75,7 @@ def car_analysis(ar, car_queue, web_car_queue):
                 'info_list': info_list,
                 'average_height': average_height,
                 'revolution': info_len,
-                'lane id': lane_id,
+                'lane_id': lane_id,
                 'max_height': max_height,
                 'average_q': average_q
             }
