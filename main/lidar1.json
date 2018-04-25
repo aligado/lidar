@@ -1,0 +1,44 @@
+{
+    "localpath": "/home/ubuntu/ServerLog",
+    "threshold_num": 2,
+    "lane_horizon": [
+        605,
+        598,
+        600,
+        600,
+        600,
+        600
+    ],
+    "lane_min": [
+        -1050,
+        -800,
+        -400,
+        200,
+        400,
+        800
+    ],
+    "lane_max": [
+        -800,
+        -400,
+        -120,
+        400,
+        800,
+        1150
+    ],
+    "unuse_height": 6666,
+    "threshold_height": 32,
+    "car_threshold": 60,
+    "lidar_height": 600,
+    "lidar_start_angle": 0,
+    "lidar_id": 1,
+    "lidar_end_angle": 0,
+    "lane_num": 6,
+    "host": "192.168.0.1",
+    "lidar_hz": 25,
+    "ftppath": "/",
+    "lidar_fix_angle": -5,
+    "bufsize": 2048,
+    "lidar_resolution": 0.5,
+    "port": 2111,
+    "desc": "hello world"
+}

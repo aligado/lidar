@@ -16,6 +16,8 @@ import threading
 from mtools import hexstr2int, queue, AllConfig, LidarMsg
 from datetime import datetime
 import csv
+import numpy as np
+import cv2
 import json
 
 __author__ = 'alpc32'
@@ -30,6 +32,7 @@ def add_data(path):
     log_file_list = os.listdir(path)
 
     headers = [
+        "index",
         "revolution",
         "lane_id",
         "max_height",
@@ -42,13 +45,34 @@ def add_data(path):
         if log_file.find('.json') == -1:
             continue
         log_file_path = os.path.join(path, log_file)
-        csv_file_path = log_file_path+'.csv'
+        name = log_file.split('.')[0]
+        image_floder_path = os.path.join(path, name)
+        if not os.path.exists(image_floder_path):
+            os.makedirs(image_floder_path)
+        csv_file_path = os.path.join(path, name+'.csv')
         with open(log_file_path, 'r+') as fp:
-            content = fp.read()
+            content = json.loads(fp.read())
+            for car_index, car_info in enumerate(content):
+                info_list = car_info['info_list']
+                car_info['index'] = car_index
+                image_content = np.zeros((720, 1280, 3), np.uint8)
+                print 'car_draw'
+                step = 30
+                for index, y in enumerate(info_list):
+                    x = step*index+2
+                    y = 720 - y*2
+                    image_content[ y:y+1, x:x+1] = (0, 0, 255)
+                # cv2.imshow('cvcar', image_content)
+
+                print car_index, os.path.join(image_floder_path, str(car_index)+'.png')
+                cv2.imwrite(os.path.join(image_floder_path, str(car_index)+'.png'), image_content)
+                k = cv2.waitKey(20)
             with open(csv_file_path, 'w+') as f:
                 writer = csv.DictWriter(f, headers)
                 writer.writeheader()
-                writer.writerows(json.loads(content))
+                writer.writerows(content)
+
+            
 
 def cli(argv):
     """
