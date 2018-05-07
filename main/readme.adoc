@@ -9,11 +9,12 @@ Mu HongYun <muhongyun@gmail.com>
 . 安装高度6到8米
 . 雷达正对路面，保证扫描平面与路面平行
 . 固定雷达ip及port
+. 雷达扫描频率50hz
 
 === 1.2 车道测量
 雷达与路面垂直的交点为0点,测量各车道两条边线到交点的最短距离
 
-=== 1.3 开发版配置
+=== 1.3 开发版环境配置
 . windows linux系统不限
 . 包含完整python2.7运行环境
 . 具备一个网口同雷达连接 
@@ -25,16 +26,24 @@ Mu HongYun <muhongyun@gmail.com>
 ** 水平高度
 . 配置上传服务器地址及端口
 
+== 2 开发板程序说明
 
-* ubuntu 12.04 (arm)
-* python 2.7
-  * sudo pip install flask
-  * sudo pip install flask_cors 
+=== 2.1 雷达驱动 lidar.py
 
-# 2 启动
-python web_server.py
+=== 2.2 雷达扫描帧解析 lidar.py
 
-# lidar.py
-* lidar驱动程序,使用tcp和sick激光连接
-* 正常工作时主要使用scandata 1连续扫描的模式
+=== 2.3 车辆特征参数提取 lidar.py
+
+=== 2.4 车型分析算法 lidar.py
+
+
+== 3 使用与维护
+
+=== 3.1 进程监控脚本 daemon.py 
+
+=== 3.2 参数远程更新与配置
+
+=== 3.3 开发板内网穿透服务配置
+
+
 
