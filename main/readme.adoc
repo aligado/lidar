@@ -1,0 +1,40 @@
+= 雷达车型识别开发板上程序说明
+Mu HongYun <muhongyun@gmail.com>
+1.0, 05 05, 2018
+:toc:
+
+== 1 安装工作 
+
+=== 1.1 安装配置雷达
+. 安装高度6到8米
+. 雷达正对路面，保证扫描平面与路面平行
+. 固定雷达ip及port
+
+=== 1.2 车道测量
+雷达与路面垂直的交点为0点,测量各车道两条边线到交点的最短距离
+
+=== 1.3 开发版配置
+. windows linux系统不限
+. 包含完整python2.7运行环境
+. 具备一个网口同雷达连接 
+. 额外的网口或者wifi连接上网，以便上传数据，调试，监控
+
+=== 1.4 配置基础参数
+. 配置各车道左右边沿参数
+. 配置各车道水平高度参数
+** 水平高度
+. 配置上传服务器地址及端口
+
+
+* ubuntu 12.04 (arm)
+* python 2.7
+  * sudo pip install flask
+  * sudo pip install flask_cors 
+
+# 2 启动
+python web_server.py
+
+# lidar.py
+* lidar驱动程序,使用tcp和sick激光连接
+* 正常工作时主要使用scandata 1连续扫描的模式
+
