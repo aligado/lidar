@@ -16,14 +16,13 @@ import cv2
 PI = math.pi
 hex2int = hexstr2int
 
+HIGHT_TABLE = {}
 
 class CarInfo(object):
     """
     frameinfo object
     收集车道上经过每辆车雷达点阵信息
     """
-    threshold_num = AllConfig.threshold_num  # 连续点阈值
-    threshold_height = AllConfig.threshold_height  # 高度阈值
     # threshold_height = 32  # 高度阈值
     # threshold_num = 2  # 连续点阈值
 
@@ -32,6 +31,8 @@ class CarInfo(object):
         self.horizon_line = 0  # 车道水平线,修正高度
         self.under_cnt = 0  # 连续空白无车辆计数
         self.id = id  # 车道id
+        self.threshold_num = AllConfig.threshold_num  # 连续点阈值
+        self.threshold_height = AllConfig.threshold_height  # 高度阈值
         print 'threshold', self.threshold_num, self.threshold_height
         # print AllConfig.threshold_height
         # print AllConfig.threshold_num
@@ -86,6 +87,7 @@ class CarInfo(object):
         return 'null'
 
 
+
 def get_frame_info(buf, car_info):
 
     """
@@ -96,23 +98,48 @@ def get_frame_info(buf, car_info):
     def cv_draw(xdata, ydata):
         image_content = np.zeros((400, 1280, 3), np.uint8)
         # print('frame_draw')
-        image_content[ 0:0+5, 640:640+2 ] = (0, 255, 255)
+        image_content[0:0+5, 640:640+2] = (0, 255, 255)
         for index, h in enumerate(AllConfig.lane_horizon):
             lane_min = AllConfig.lane_min[index] + 2000
             lane_max = AllConfig.lane_max[index] + 2000
             x1 = 1280*lane_min/4000
             x2 = 1280*lane_max/4000
             y = 400*(AllConfig.lane_horizon[index])/1000
-            image_content[ y-10:y+10, x1-1:x1+1 ] = (255, 255, 0)
-            image_content[ y-10:y+10, x2-1:x2+1 ] = (255, 255, 0)
-            image_content[ y:y+1, x1:x2+1 ] = (255, 255, 0)
+            image_content[y-10:y+10, x1-1:x1+1] = (255, 255, 0)
+            image_content[y-10:y+10, x2-1:x2+1] = (255, 255, 0)
+            image_content[y:y+1, x1:x2+1] = (255, 255, 0)
+
+        for point_x1 in range(-1600, 1600, 100):
+            point_x2 = point_x1+100
+
+            lane_min = point_x1 + 2000
+            lane_max = point_x2 + 2000
+
+            x1 = 1280*lane_min/4000
+            x2 = 1280*lane_max/4000
+
+            y = 400*700/1000
+            image_content[y-10:y+10, x1-1:x1+1] = (255, 0, 0)
+            image_content[y-10:y+10, x2-1:x2+1] = (255, 0, 0)
+            image_content[y:y+1, x1:x2+1] = (255, 0, 0)
+
+            cv2.putText(image_content, str(point_x1), (x1-10, y+20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 255),
+                        1)
+        
+        for key, value in HIGHT_TABLE.items():
+            x1 = key + 2000
+            x1 = 1280*x1/4000
+            y = 400*700/1000
+            image_content[y:y+value, x1:x1+1] = (255, 255, 0)
+
 
         for index, x in enumerate(xdata):
             y = ydata[index]
             x += 2000
             x = 1280*x/4000
             y = 400*y/1000
-            image_content[ y:y+1, x:x+1] = (0, 0, 255)
+            image_content[y:y+1, x:x+1] = (0, 0, 255)
         cv2.imshow('cvdraw', image_content)
         k = cv2.waitKey(20)
 
@@ -151,6 +178,7 @@ def get_frame_info(buf, car_info):
             temp_y = 1000
         '''
         temp_y = int(temp_y)
+        temp_x = int(temp_x)
 
         # 添加二维点
         xdata.append(temp_x)
@@ -160,6 +188,15 @@ def get_frame_info(buf, car_info):
         # 遍历6个车道，找到每个车道最高点
         for lane_index in range(0, 6):
             if temp_x >= AllConfig.lane_min[lane_index] and temp_x <= AllConfig.lane_max[lane_index]:
+                if temp_y > 50:
+                # if temp_y < height[lane_index]:
+                    # print 'temp_y', temp_y
+                    if AllConfig.lane_horizon[lane_index] - temp_y > 150:
+                        # print('over', temp_x, temp_y)
+                        if temp_x in HIGHT_TABLE:
+                            HIGHT_TABLE[temp_x] += 1
+                        else:
+                            HIGHT_TABLE[temp_x] = 1
                 if temp_y > 50 and temp_y < height[lane_index]:
                 # if temp_y < height[lane_index]:
                     # print 'temp_y', temp_y
@@ -182,11 +219,14 @@ def read_frame(ar, queue, web_frame_queue, car_queue):
     @car_queue 雷达扫描到的车辆高度图像信息
     """
 
+    print 'read_frame process AllConfig.__dict__: ', AllConfig.__dict__
+
     # 各车道车辆信息实例初始化
     car_info = [None]*6  # need update
     for index in range(0, 6):
         car_info[index] = CarInfo(index)
     # 赋值各车道修正高度
+
     car_info[0].horizon_line = AllConfig.lane_horizon[0]
     car_info[1].horizon_line = AllConfig.lane_horizon[1]
     car_info[2].horizon_line = AllConfig.lane_horizon[2]

@@ -80,7 +80,7 @@ class LidarSimulate(object):
                     for line in self.lidar_log_list:
                         print 'line', line[0:20]
                         sock.send(line)
-                        time.sleep(0.03)
+                        time.sleep(0.01)
                     return
                 else:
                     sock.send('o')
