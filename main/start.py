@@ -12,10 +12,6 @@ import time
 from frame import read_frame
 from analysis import car_analysis
 
-RELEASE_PATH = 'out'
-pack = os.path.join
-
-
 class Handle(object):
     lidar = None
     scan_flag = Array('i', 5)
