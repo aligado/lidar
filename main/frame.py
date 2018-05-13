@@ -99,6 +99,7 @@ def get_frame_info(buf, car_info):
         image_content = np.zeros((400, 1280, 3), np.uint8)
         # print('frame_draw')
         image_content[0:0+5, 640:640+2] = (0, 255, 255)
+
         for index, h in enumerate(AllConfig.lane_horizon):
             lane_min = AllConfig.lane_min[index] + 2000
             lane_max = AllConfig.lane_max[index] + 2000
@@ -108,6 +109,22 @@ def get_frame_info(buf, car_info):
             image_content[y-10:y+10, x1-1:x1+1] = (255, 255, 0)
             image_content[y-10:y+10, x2-1:x2+1] = (255, 255, 0)
             image_content[y:y+1, x1:x2+1] = (255, 255, 0)
+
+        for point_y1 in range(0, 800, 100):
+            point_y2 = point_y1+100
+
+            y1 = 400*point_y1/1000
+            y2 = 400*point_y2/1000
+            x1 = 640
+            x2 = 640
+
+            image_content[y1:y1+2, x1:x1+10] = (255, 0, 0)
+            image_content[y2:y2+2, x2:x2+10] = (255, 0, 0)
+            image_content[y1:y2+1, x1:x1+1] = (255, 0, 0)
+
+            cv2.putText(image_content, str(point_y1), (x1+10, y1),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 255),
+                        1)
 
         for point_x1 in range(-1600, 1600, 100):
             point_x2 = point_x1+100
