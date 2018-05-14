@@ -80,7 +80,7 @@ class LidarSimulate(object):
                     for line in self.lidar_log_list:
                         print 'line', line[0:20]
                         sock.send(line)
-                        time.sleep(0.01)
+                        time.sleep(0.02)
                     return
                 else:
                     sock.send('o')
@@ -98,10 +98,11 @@ class LidarSimulate(object):
 
 def cli(argv):
     """
+    模拟雷达本地端口9999 ip 127.0.0.1
     """
     print(argv)
     lidar_simulate = LidarSimulate(9999)
-    lidar_simulate.add_data('/media/psf/share/lidar/data')
+    lidar_simulate.add_data('../data')
     lidar_simulate.poweron()
 
 if __name__ == '__main__':

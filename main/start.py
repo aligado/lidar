@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from cStringIO import StringIO as IO
 import json
 import gzip
 import functools
+import time
 from lidar import LidarHandle
 from mtools import hexstr2int, queue, AllConfig
 from multiprocessing import Process, Array, Value, Queue
-import time
 from frame import read_frame
 from analysis import car_analysis
+from proxy import msg_server
 
 class Handle(object):
     lidar = None
@@ -20,10 +20,7 @@ class Handle(object):
     car_process = None
     frame_queue = queue
     car_queue = Queue()
-
-    web_frame_queue = Queue()
-    web_lane_queue = Queue()
-    web_car_queue = Queue()
+    res_queue = Queue()
 
     @classmethod
     def create_scan_process(cls):
@@ -40,7 +37,6 @@ class Handle(object):
         cls.read_process = Process(target=read_frame,
                                    args=(cls.scan_flag,
                                          cls.frame_queue,
-                                         cls.web_frame_queue,
                                          cls.car_queue))
         cls.read_process.daemon = True
         cls.read_process.start()
@@ -50,9 +46,17 @@ class Handle(object):
         cls.car_process = Process(target=car_analysis,
                                   args=(cls.scan_flag,
                                         cls.car_queue,
-                                        cls.web_car_queue))
+                                        cls.res_queue))
         cls.car_process.daemon = True
         cls.car_process.start()
+
+    @classmethod
+    def create_proxy_process(cls):
+        cls.proxy_process = Process(target=msg_server,
+                                    args=(cls.scan_flag,
+                                          cls.res_queue))
+        cls.proxy_process.daemon = True
+        cls.proxy_process.start()
 
     @classmethod
     def connect(cls):
@@ -76,6 +80,7 @@ def system_shutdown():
 def system_poweron():
     """
     初始化
+    启动雷达程序
     """
     AllConfig.read_config_file()
     Handle.connect()
@@ -85,6 +90,8 @@ def system_poweron():
     print 'create_read_process'
     Handle.create_analysis_process()
     print 'create_analysis_process'
+    Handle.create_proxy_process()
+    print 'create_proxy_process'
     '''
     while not Handle.frame_queue.empty():
         print Handle.frame_queue.get()

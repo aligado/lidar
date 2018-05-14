@@ -79,6 +79,28 @@ image::static/lane.png["lane", align="center"]
 从雷达扫描帧数据得到车辆波形，从而分析出车辆经过时占用的雷达周期数，最高高度，平均高度，高度方差，平均宽度等数据
 与9类车辆典型数据做匹配，匹配度最高的车型即为当前扫描的车辆的车型
 
+正常启动如下
+[source]
+0 host和port配置如下，介入真实雷达数据
+    "host": "192.168.0.25",
+    "port": 25,
+2 启动雷达数据分析程序
+python start.py
+
+安装cv2,numpy库之后能可以进行本地模拟测试
+
+[source]
+0 host和port配置如下，接入本地模拟数据
+    "host": "127.0.0.1",
+    "port": 9999,
+1 启动模拟雷达
+python simulate_lidar.py
+2 启动雷达数据分析程序
+python start.py
+
+image::static/debug.jpg["debug", align="center"]
+
+
 
 == 3 使用与维护
 

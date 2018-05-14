@@ -10,11 +10,16 @@ import math
 from file_handle import FileHandle
 from mtools import queue, hexstr2int, AllConfig, PI
 import json
-import cv2
-import numpy as np
+
+try:
+    import cv2
+    import numpy as np
+except Exception as identifier:
+    print('arm platform')
 
 
-def car_analysis(ar, car_queue, web_car_queue):
+
+def car_analysis(ar, car_queue, res_queue):
     """
     @ar 进程共享变量控制进程开关
     @car_queue 车辆信息队列
@@ -79,19 +84,68 @@ def car_analysis(ar, car_queue, web_car_queue):
                 'max_height': max_height,
                 'average_q': average_q
             }
-            cv_draw(info_list)
-            '''
-            print 'web_car_queue', web_car_queue.qsize()
-            if web_car_queue.qsize < 5000:
-                web_car_queue.put(car_res)
-                print 'insert car'
-            '''
+            res_mode = analysis_model(car_res)
+            car_res['type'] = res_mode
+            if cv2:
+                cv_draw(info_list)
             print 'car_res', car_res
-            car_file.write_json(car_res)
+            car_file.write_json(car_res, res_queue)
             # web_car_queue.put(car_res)
         time.sleep(0.1)
 
-
-if __name__ == '__main__':
-    # import sys
-    pass
+def analysis_model(car_res):
+    car_model = [
+        {
+            'name': 'car', # 小客
+            'average_height': [100, 180],
+            'length': [5, 10]
+        },
+        {
+            'name': 'small lorry', # 小货
+            'average_height': [200, 300],
+            'length': [10, 20]
+        },
+        {
+            'name': 'bus', # 大客
+            'average_height': [181, 300],
+            'avarage_q': [0, 60],
+            'length': [8, 12]
+        },
+        {
+            'name': 'lorry', # 中货
+            'average_height': [200, 250],
+            'length': [5, 10]
+        },
+        {
+            'name': 'truck', # 大货
+            'average_height': [250, 300],
+            'length': [10, 20]
+        },
+        {
+            'name': 'huge truck', # 特大货 
+            'average_height': [300, 380],
+            'length': [20, 200]
+        },
+        {
+            'name': 'trailer', # 拖挂车 集装箱
+            'average_height': [380, 600],
+            'length': [24, 300]
+        },
+        {
+            'name': 'motor', # 摩托
+            'average_height': [100, 150],
+            'length': [2, 5]
+        }
+    ]
+    for key, model in enumerate(car_model):
+        if (car_res['average_height'] >= model['average_height'][0] and
+            car_res['average_height'] <= model['average_height'][1] and
+            car_res['revolution'] >= model['length'][0] and
+            car_res['revolution'] <= model['length'][1]):
+            if 'average_q' in model:
+                if (car_res['average_q'] >= model['average_q'][0] and
+                    car_res['average_q'] <= model['average_q'][1]):
+                    return key
+            else:
+                return key
+    return 0

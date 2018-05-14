@@ -62,6 +62,10 @@ class AllConfig(object):
     bufsize = 2048
     car_threshold = 60
     ftp_path = ''
+    server_ip = ''
+    server_port = ''
+    device_id = ''
+    station_number = ''
 
     @staticmethod
     def read_config_file(config_file_path="lidar.json"):
@@ -84,9 +88,12 @@ class AllConfig(object):
         AllConfig.local_path = temp_conf['localpath']
         AllConfig.host = temp_conf['host']
         AllConfig.port = temp_conf['port']
-        AllConfig.ftp_path = temp_conf['ftppath']
+        AllConfig.server_ip = temp_conf['server_ip']
+        AllConfig.server_port = temp_conf['server_port']
         AllConfig.bufsize = temp_conf['bufsize']
         AllConfig.car_threshold = temp_conf['car_threshold']
+        AllConfig.device_id = temp_conf['device_id']
+        AllConfig.station_number = temp_conf['station_number']
         print AllConfig.__dict__
 
 

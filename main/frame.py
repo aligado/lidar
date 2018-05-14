@@ -10,8 +10,11 @@ import time
 import math
 # from file_handle import FileHandle
 from mtools import hexstr2int, AllConfig
-import numpy as np
-import cv2
+try:
+    import cv2
+    import numpy as np
+except Exception as identifier:
+    print('arm platform')
 
 PI = math.pi
 hex2int = hexstr2int
@@ -219,7 +222,8 @@ def get_frame_info(buf, car_info):
                     # print 'temp_y', temp_y
                     height[lane_index] = temp_y
 
-    cv_draw(xdata, ydata)
+    if cv2:
+        cv_draw(xdata, ydata)
 
     analysis_list = ['null']*6
     for lane_index in range(0, 6):
@@ -227,7 +231,7 @@ def get_frame_info(buf, car_info):
     return xdata, ydata, height, analysis_list
 
 
-def read_frame(ar, queue, web_frame_queue, car_queue):
+def read_frame(ar, queue, car_queue):
     """
     读取处理每一帧雷达原始数据的信息
     @ar [0]进程正常运行标志
@@ -300,9 +304,6 @@ def read_frame(ar, queue, web_frame_queue, car_queue):
             for temp in analysis_data:
                 if temp != 'null':
                     car_queue.put(temp)
-
-            if web_frame_queue.empty():
-                web_frame_queue.put([xdata, ydata, height, analysis_data])
 
         time.sleep(0.1)
 

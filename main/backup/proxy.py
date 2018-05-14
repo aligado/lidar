@@ -8,7 +8,6 @@ import json
 import struct
 import socket
 import binascii
-import time
 
 from mtools import AllConfig
 
@@ -30,12 +29,36 @@ def ten2hex(num, hex_len = None):
 convert = binascii.b2a_hex
 
 class CarData(object):
+    template = 'AAAAEA000130303731313534333133303130303037533231364C323537313130323239000001E2070319051401060B000100000D00100000000000000000000000000100090000000000000000000C000000000000000000000000000000000000000000000000000000000000000D000000000000000000000000000000000000000000000000000000000000001F000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000210510000009002C03002100000001003200000000000000000000000000000024F9EEEE' 
+    sample = [
+        "AAAA", #0 前缀 
+        "EA00", #1 包长度
+        "01", #2 包类型
+        "30303731313534333133303130303037", #3 设备ID
+        "533231364C32353731313032323900", #4 站点号
+        "00", #5 设备硬件错误码
+        "01", #6 调查内容，调查所有项目
+        "E207", #7 年份
+        "03", #8 月份
+        "19", #9 日期
+        "05", #10 交通数据处理周期
+        "7100", #11 时间序号
+        "06", #12 车道数
+        "0B000100000D0010000000000000000000000000010009000000000000000000", #13 第一个车道数据
+        "0C00000000000000000000000000000000000000000000000000000000000000",
+        "0D00000000000000000000000000000000000000000000000000000000000000",
+        "1F00000000000000000000000000000000000000000000000000000000000000",
+        "2000000000000000000000000000000000000000000000000000000000000000",
+        "21051000000D002C030021000000010032000000000000000000000000000000",
+        "24F9", #-2 CRC校验
+        "EEEE" #-1 数据包结尾
+    ]
     def __init__(self):
-        self.device_id = AllConfig.device_id # '0011110206090001'
-        # self.device_id = "0021140306120001" # '0011110206090001'
+        # print(self.sample[13])
+        # print(len(self.sample[13]))
+        self.device_id = "0021140306120001" # '0011110206090001'
         # self.device_id = '0011110206090001'
-        self.station_number = AllConfig.station_number # 'G102L206120225'
-        # self.station_number = "S227J205320584" # 'G102L206120225'
+        self.station_number = "S227J205320584" # 'G102L206120225'
         # self.station_number = 'S216L257110229'
         self.now_mess = [
             "AAAA", #0 前缀 
@@ -67,9 +90,6 @@ class CarData(object):
             self.now_mess[4] += '00'
 
     def pack_message(self, mess):
-        """
-        打包message
-        """
         self.now_mess[7] = ten2hex(mess['year'], 4)
         print 'year', self.now_mess[7]
         self.now_mess[8] = ten2hex(mess['month'], 2)
@@ -94,6 +114,18 @@ class CarData(object):
     def hex(self):
         data = self.template
         return data.decode('hex')
+        '''
+        print len(data)
+        str2 = ''
+        str1 = ''
+        while data:
+            str1 = data[0:2]
+            s = int(str1,16)
+            print(str1, s)
+            str2 += struct.pack('B',s)
+            data = data[2:]
+        return str2
+        ''' 
 
     def write_buf(self, buf):
         pass
@@ -101,20 +133,7 @@ class CarData(object):
     def tcp_client(self, buf):
         pass
 
-def msg_server(ar, res_queue):
-    while True:
-        if ar[0] == 0:
-            print "get exit cmd"
-            return
-        while not res_queue.empty():
-            car_mess = res_queue.get()
-            send_msg(car_mess)
-        time.sleep(10)
-
 def send_msg(car_mess):
-    """
-    发送结果数据到指定服务器
-    """
     cardata = CarData()
     mess = {
         'year': 2018,
@@ -155,8 +174,6 @@ def send_msg(car_mess):
     send_cnt = 0
     ip = AllConfig.server_ip
     port = AllConfig.server_port
-
-    # 尝试10次传送
     while send_cnt < 10:
         try:
             print temp, len(temp) 

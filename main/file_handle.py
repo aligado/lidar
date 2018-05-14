@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import json
 from proxy import send_msg 
+import threading
 
 class FileHandle(object):
     def __init__(self):
@@ -14,56 +15,39 @@ class FileHandle(object):
         self.max_cnt = 5
         self.file_buf = ""
         self.path = 'out/'
-        self.lane_car = [
-            {
-                'total': 0
-            },
-            {
-                'total': 0
-            },
-            {
-                'total': 0
-            },
-            {
-                'total': 0
-            },
-            {
-                'total': 0
-            },
-            {
-                'total': 0
-            }
-        ]
     
     @classmethod
     def parse_mess(cls, json_data):
         res = [
             {
-                'total': 0
+                'total': [0]*9
             },
             {
-                'total': 0
+                'total': [0]*9
             },
             {
-                'total': 0
+                'total': [0]*9
             },
             {
-                'total': 0
+                'total': [0]*9
             },
             {
-                'total': 0
+                'total': [0]*9
             },
             {
-                'total': 0
+                'total': [0]*9
             }
         ]
         for car_data in json_data:
             lane_id = car_data['lane_id']
-            res[lane_id]['total'] += 1
+            if 'type' in car_data:
+                res[lane_id]['total'][car_data['type']] += 1
+            else:
+                res[lane_id]['total'][0] += 1
         print res
         return res
 
-    def write_json(self, buf):
+    def write_json(self, buf, res_queue):
         self.file_write_cnt += 1
         if self.file_buf == "":
             self.file_buf = []
@@ -78,8 +62,17 @@ class FileHandle(object):
                 fp.close()
                 temp = self.parse_mess(self.file_buf)
                 print temp
-                send_msg(temp)
-                self.file_buf = "" 
+
+                # send_msg(temp)
+                res_queue.put(temp)
+                '''
+                send_msg_thread = threading.Thread(target=send_msg,
+                                                   args=(temp, ))
+                send_msg_thread.daemon = True
+                send_msg_thread.start()
+                '''
+
+                self.file_buf = ""
                 self.file_tips = now_tips
 
     def write_buf(self, buf):

@@ -27,6 +27,8 @@
     ],
     "unuse_height": 6666,
     "threshold_height": 32,
+    "server_ip": "121.52.216.242",
+    "server_port": 3132,
     "car_threshold": 60,
     "lidar_height": 600,
     "lidar_start_angle": 0,
@@ -40,5 +42,6 @@
     "bufsize": 2048,
     "lidar_resolution": 0.5,
     "port": 9999,
-    "desc": "hello world"
+    "device_id": "0021140306120001",
+    "station_number": "S227J205320584"
 }
