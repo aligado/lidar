@@ -2,10 +2,11 @@
 Mu HongYun <muhongyun@gmail.com>
 1.0, 05 05, 2018
 :toc:
+:numbered:
 
-== 1 安装工作 
+== 安装工作 
 
-=== 1.1 安装配置雷达
+=== 安装配置雷达
 . 安装高度6到8米
 . 雷达正对路面，保证扫描平面与路面平行
 . 固定雷达ip及port
@@ -13,18 +14,18 @@ Mu HongYun <muhongyun@gmail.com>
 
 image::static/lidar.png["lidar", align="center"]
 
-=== 1.2 车道测量
+=== 车道测量
 雷达与路面垂直的交点为0点,测量各车道两条边线到交点的最短距离
 
 image::static/lane.png["lane", align="center"]
 
-=== 1.3 开发版环境配置
+=== 开发版环境配置
 . windows linux系统不限
 . 包含完整python2.7运行环境
 . 具备一个网口同雷达连接 
 . 额外的网口或者wifi连接上网，以便上传数据，调试，监控
 
-=== 1.4 配置基础参数
+=== 配置基础参数
 . 配置各车道左右边沿参数
 . 配置各车道水平高度参数
 ** 水平高度
@@ -64,28 +65,46 @@ image::static/lane.png["lane", align="center"]
     "port": 25
 }
 
-== 2 开发板程序说明
+== 开发板程序说明
 
-=== 2.1 雷达驱动 lidar.py
+=== 雷达驱动 lidar.py
 单独一个进程负责与雷达通信，连续读取雷达数据，将雷达数据发送给线程通信队列
 
-=== 2.2 雷达扫描帧解析 frame.py
+=== 雷达扫描帧解析 frame.py
 从线程通信队列中连续读取雷达数据，将雷达数据转换成二维坐标，进而提取出当前车道扫描到车辆的最高点，将车辆高度数据发送给线程通信队列
 
-=== 2.3 车辆特征参数提取 analysis.py
+=== 车辆特征参数提取 analysis.py
 从线程通信队列中连续读取车辆数据，对车辆数据进行分析分型，再通过网络将结果转发给服务器
 
-=== 2.4 车型分析算法说明
+=== 车型分析算法说明
 从雷达扫描帧数据得到车辆波形，从而分析出车辆经过时占用的雷达周期数，最高高度，平均高度，高度方差，平均宽度等数据
 与9类车辆典型数据做匹配，匹配度最高的车型即为当前扫描的车辆的车型
 
-正常启动如下
+测试启动如下
 [source]
 0 host和port配置如下，介入真实雷达数据
     "host": "192.168.0.25",
     "port": 25,
 2 启动雷达数据分析程序
-python start.py
+bash: python start.py
+
+生产环境，具备进程守护功能
+[source, sh]
+bash: ./daemon.sh
+需要将daemon.sh添加到开发版local.rc文件下,然后可以开机启动
+#!/bin/sh
+while true;
+do
+  count=$(ps -ef | grep -c start.py) #查找当前的进程中，计算server程序的数量
+  if [ $count -lt 4 ]; then        #判断服务器进程的数量是否小于4（根据实际填上你的服务器进程数量）
+    ps -efww|grep -w 'start.py'|grep -v grep|cut -c 9-15|xargs kill -9
+    # server start                   #这里填入需要重启的服务器进程
+    cd '/media/psf/share/lidar/main' #这里更换为在开发版上软件包的路径
+    python start.py
+  fi
+  sleep 2                          #睡眠2s，周期性地检测服务器程序是不是崩溃了
+done
+
 
 安装cv2,numpy库之后能可以进行本地模拟测试
 
@@ -94,21 +113,19 @@ python start.py
     "host": "127.0.0.1",
     "port": 9999,
 1 启动模拟雷达
-python simulate_lidar.py
+bash: python simulate_lidar.py
 2 启动雷达数据分析程序
-python start.py
+bash: python start.py
 
 image::static/debug.jpg["debug", align="center"]
 
+== 使用与维护
 
-
-== 3 使用与维护
-
-=== 3.1 进程监控脚本 daemon.sh
+=== 进程监控脚本 daemon.sh
 监控雷达进程，正常情况下雷达有三个python start.py进程，若发现当前系统python start.py进程数少于三个，杀掉当前雷达程序进程，然后重启,daemon.sh添加到local.rc系统脚本，开机即启动
 
-=== 3.2 开发板内网穿透服务配置
+=== 开发板内网穿透服务配置
 通过 https://github.com/fatedier/frp[frp] 配置内网穿透服务
 
-=== 3.3 参数远程更新与配置
+=== 参数远程更新与配置
 frp参数配置好之后能够远程访问开发板，通过编辑lidar.json数据修改雷达参数

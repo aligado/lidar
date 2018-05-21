@@ -102,4 +102,3 @@ if __name__ == '__main__':
     system_poweron()
     while True:
         time.sleep(10)
-    # app.run(debug=True, host="0.0.0.0", port=8080)

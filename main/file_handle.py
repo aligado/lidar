@@ -74,24 +74,7 @@ class FileHandle(object):
 
                 self.file_buf = ""
                 self.file_tips = now_tips
-
-    def write_buf(self, buf):
-        self.file_write_cnt += 1
-        self.file_buf += buf + '\n'
-        print buf, self.file_write_cnt
-        if self.file_write_cnt >= self.max_cnt:
-            self.file_write_cnt = 0
-            now_tips = self.get_tips()
-            if now_tips != self.file_tips and self.suit_tips(now_tips):
-                fp = open(self.path + now_tips + '.txt', 'w+')
-                fp.write(self.file_buf)
-                fp.close()
-                self.file_buf = ''
-                self.file_tips = now_tips
     
-    def tcp_client(self, buf):
-        pass
-
     @staticmethod
     def get_tips():
         return time.strftime('%Y%m%d%H%M')
@@ -113,7 +96,6 @@ def test(argv):
         time.sleep(1)
         if cnt == 700:
             break
-
 
 if __name__ == '__main__':
     import sys
