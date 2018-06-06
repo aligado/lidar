@@ -3,8 +3,7 @@
 # Author: alpc32
 # Date: 2017-09-12 22:29:40
 # Last Modified by:   alpc32
-# Last Modified time: 2018年 2月15日 星期四 17时13分31秒 CST
-
+# Last Modified time: Wed Jun  6 22:30:32 CST 2018
 
 import socket
 import time
@@ -18,7 +17,6 @@ __author__ = 'alpc32'
 __version__ = '1.0'
 __progname__ = 'lidar'
 
-
 class LidarHandle(object):
     """
     雷达驱动接口
@@ -31,7 +29,7 @@ class LidarHandle(object):
         """
         self.ip = ip
         self.port = port
-        self.s = {}
+        self.s = None
 
     def __del__(self):
         """
@@ -52,17 +50,18 @@ class LidarHandle(object):
         # 打印雷达参数
         self.s.send("sRN LMPscancfg")
         buf = self.s.recv(1024)
-        print 'buf', buf
+        print "lidar config :", buf
         temp_ss = buf.split()
         if len(temp_ss) < 7:
+            print "lidar reciver cfg Error"
             return
+        '''
         self.frequency = hexstr2int(temp_ss[2])/100
         self.resolution = hexstr2int(temp_ss[4])*1.0/10000.0
-        # self.start_angle = 0
-        # self.stop_angle = 180
         self.start_angle = hexstr2int(temp_ss[5])*1.0/10000.0
         self.stop_angle = hexstr2int(temp_ss[6][0:-1])*1.0/10000.0
         print self.__dict__
+        '''
 
     def close(self):
         """
@@ -76,41 +75,18 @@ class LidarHandle(object):
         """
         self.s.send("sRN LMDscandata")
         buf = self.s.recv(2048)
-        queue.put(buf)
+        return buf
     
-    @classmethod
-    def open_test(cls, ar, queue):
-        """
-        just for emulation test
-        """
-        # file_path = '/Users/mu/Desktop/lidar/store/data/txt/20171203164659.txt'
-        file_path = '/mnt/hgfs/GitHub/lidardata/20171203164659.txt'
-        fp = open(file_path, 'r+')
-        content = fp.readlines()
-        fp.close()
-
-        index = 0
-        content_len = len(content)
-        while True:
-            # print "lidar process"
-            if ar[0] == 0:
-                print "get exit cmd"
-                return
-            buf = content[index]
-            print buf[0:10]
-            queue.put(buf)
-            time.sleep(0.2)
-            index = (index + 1) % content_len
-
     def open_scandata1(self, ar):
         """
         获取雷达连续扫描数据
+        @ar Process flag
         """
         self.s.send("sEN LMDscandata 1")
         while True:
             # print "lidar process"
             if ar[0] == 0:
-                print "get exit cmd"
+                print "scandata1 Process get exit cmd"
                 return
             buf = self.s.recv(2048)
             # print buf[0:20]
@@ -125,7 +101,6 @@ class LidarHandle(object):
         self.s.send("sEN LMDscandata 0")
         ar[0] = 0
         time.sleep(2)
-
 
 # just for test below
 def main():

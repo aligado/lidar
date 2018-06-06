@@ -31,6 +31,7 @@ class CarInfo(object):
 
     def __init__(self, id):
         self.info_list = []  # 车辆波形数组
+        self.width_list = []  # 车辆波形数组
         self.horizon_line = 0  # 车道水平线,修正高度
         self.under_cnt = 0  # 连续空白无车辆计数
         self.id = id  # 车道id
@@ -44,11 +45,16 @@ class CarInfo(object):
         """
         插入单侦车辆高度信息
         """
+
         # 由于雷达倒装
         # 车的高度等于标定水平线减去
         height = self.horizon_line - height
+        if height < 0:
+            height = 0
         # print 'horizon_line', self.horizon_line, height, self.id
         self.info_list.append(height)
+        self.width_list.append(width)
+
         '''
         print('insert', height)
         print('insert', self.info_list)
@@ -59,20 +65,22 @@ class CarInfo(object):
         if height < self.threshold_height:
             self.under_cnt += 1
             if self.under_cnt >= self.threshold_num:
-                res = self.car_analysis(self.info_list)
+                res = self.car_analysis()
                 self.info_list = []
+                self.width_list = []
                 self.under_cnt = 0
                 return res
         else:
             self.under_cnt = 0
         return 'null'
 
-    def car_analysis(self, info_list):
+    def car_analysis(self):
         """
         将info_list去头截尾得到
         一个车辆完整的高度轮廓
         """
         # print('id info_list', self.id, info_list)
+        info_list = self.info_list
         info_len = len(info_list)
         begin = 0
         end = info_len - self.threshold_num
@@ -81,11 +89,14 @@ class CarInfo(object):
         # print('begin end', begin, end)
         if begin+self.threshold_num < end:
             info_list = info_list[begin:end]
+            width_list = self.width_list[begin:end]
+            
             # info_len = len(info_list)
             if len(info_list) > 6:
                 return {
                     'id': self.id,
                     'info_list': info_list,
+                    'width_list': width_list
                 }
         return 'null'
 
@@ -174,9 +185,11 @@ def get_frame_info(buf, car_info):
     # print('len ', num_len)
     end = min(26+num_len, buf_len)
     height = [AllConfig.unuse_height]*6
+    width = [0]*6
 
     lidar_fix_angle = AllConfig.lidar_fix_angle
     lidar_fix_angle = 0
+    x_range = [[], [], [], [], [], []]
     for i in range(26, end):
         angle = ((i - 26 + lidar_fix_angle) * 0.5 + 0) * PI / 180.0
         vle = hex2int(buf[i]) / 10.0
@@ -204,7 +217,7 @@ def get_frame_info(buf, car_info):
         xdata.append(temp_x)
         ydata.append(temp_y)
 
-
+        
         # 遍历6个车道，找到每个车道最高点
         for lane_index in range(0, 6):
             if temp_x >= AllConfig.lane_min[lane_index] and temp_x <= AllConfig.lane_max[lane_index]:
@@ -217,6 +230,8 @@ def get_frame_info(buf, car_info):
                             HIGHT_TABLE[temp_x] += 1
                         else:
                             HIGHT_TABLE[temp_x] = 1
+                    if AllConfig.lane_horizon[lane_index] - temp_y > 20:
+                        x_range[lane_index].append(temp_x)
                 if temp_y > 50 and temp_y < height[lane_index]:
                 # if temp_y < height[lane_index]:
                     # print 'temp_y', temp_y
@@ -224,10 +239,17 @@ def get_frame_info(buf, car_info):
 
     if cv2:
         cv_draw(xdata, ydata)
+    for lane_index in range(0, 6):
+        if x_range[lane_index]:
+            x_range[lane_index].sort()
+            # print x_range[lane_index]
+            width[lane_index] = x_range[lane_index][-1] - x_range[lane_index][0]
+        else:
+            width[lane_index] = 0
 
     analysis_list = ['null']*6
     for lane_index in range(0, 6):
-        analysis_list[lane_index] = car_info[lane_index].insert_frame_info(height[lane_index])
+        analysis_list[lane_index] = car_info[lane_index].insert_frame_info(height[lane_index], width[lane_index])
     return xdata, ydata, height, analysis_list
 
 

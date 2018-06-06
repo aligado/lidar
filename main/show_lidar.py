@@ -35,10 +35,12 @@ def add_data(path):
         "index",
         "revolution",
         "lane_id",
+        "info_list",
+        "width_list",
         "max_height",
         "average_q",
-        "info_list",
-        "average_height"
+        "average_height",
+        "type"
     ]
 
     for log_file in log_file_list:
@@ -56,12 +58,13 @@ def add_data(path):
                 info_list = car_info['info_list']
                 car_info['index'] = car_index
                 image_content = np.zeros((720, 1280, 3), np.uint8)
+                image_content[0:720, 0:1280] = (255, 255, 255)
                 print 'car_draw'
                 step = 30
                 for index, y in enumerate(info_list):
                     x = step*index+2
                     y = 720 - y*2
-                    image_content[ y:y+1, x:x+1] = (0, 0, 255)
+                    image_content[ y:y+5, x:x+5] = (0, 0, 0)
                 # cv2.imshow('cvcar', image_content)
 
                 print car_index, os.path.join(image_floder_path, str(car_index)+'.png')

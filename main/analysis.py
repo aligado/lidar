@@ -78,6 +78,7 @@ def car_analysis(ar, car_queue, res_queue):
             '''
             car_res = {
                 'info_list': info_list,
+                'width_list': temp['width_list'],
                 'average_height': average_height,
                 'revolution': info_len,
                 'lane_id': lane_id,
