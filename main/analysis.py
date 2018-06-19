@@ -7,19 +7,78 @@
 
 import time
 import math
-from file_handle import FileHandle
-from mtools import queue, hexstr2int, AllConfig, PI
+from util import DataBuf, hexstr2int, AllConfig, PI
 import json
 
 try:
     import cv2
     import numpy as np
 except Exception as identifier:
+    cv2 = None
     print('arm platform')
 
 
+class FileHandle(object):
+    def __init__(self):
+        self.file_tips = self.get_tips()
+        self.file_write_cnt = 0
+        self.max_cnt = 5
+        self.file_buf = ""
+        self.path = 'out/'
+    
+    @classmethod
+    def parse_mess(cls, json_data):
+        def temp_mess():
+            temp = {
+                'num': [0]*9,
+                'spd': [32]*9
+            }
+            return temp
+        res = []
+        for index in range(0, 6):
+            res.append(temp_mess())
 
-def car_analysis(ar, car_queue, res_queue):
+        for car_data in json_data:
+            lane_id = car_data['lane_id']
+            if 'type' in car_data:
+                res[lane_id]['num'][car_data['type']] += 1
+            else:
+                res[lane_id]['num'][0] += 1
+        print res
+        return res
+
+    def record(self, buf):
+        self.file_write_cnt += 1
+        if self.file_buf == "":
+            self.file_buf = []
+        self.file_buf.append(buf)
+        print '[record]', buf, self.file_write_cnt
+        if self.file_write_cnt >= self.max_cnt:
+            self.file_write_cnt = 0
+            now_tips = self.get_tips()
+            if now_tips != self.file_tips and self.suit_tips(now_tips):
+                fp = open(self.path + now_tips + '.json', 'w+')
+                fp.write(json.dumps(self.file_buf))
+                fp.close()
+                temp = self.parse_mess(self.file_buf)
+                print temp
+
+                # send_msg(temp)
+                DataBuf.res.put(temp)
+                self.file_buf = ""
+                self.file_tips = now_tips
+    
+    @staticmethod
+    def get_tips():
+        return time.strftime('%Y%m%d%H%M')
+
+    @staticmethod
+    def suit_tips(tips):
+        return tips[-1] == '0' or tips[-1] == '5'
+        return True
+        # return int(tips[-1]) % 2 == 0
+
+def car_analysis():
     """
     @ar 进程共享变量控制进程开关
     @car_queue 车辆信息队列
@@ -33,68 +92,46 @@ def car_analysis(ar, car_queue, res_queue):
 
     def cv_draw(info_list):
         image_content = np.zeros((720, 1280, 3), np.uint8)
+        image_content[0:720, 0:1280] = (255, 255, 255)
         print('car_draw')
         step = 30
         for index, y in enumerate(info_list):
             x = step*index+2
             y = 720 - y*2
-            image_content[ y:y+1, x:x+1] = (0, 0, 255)
+            image_content[ y:y+5, x:x+5] = (0, 0, 255)
         cv2.imshow('cvcar', image_content)
         k = cv2.waitKey(20)
 
     while True:
-        if ar[0] == 0:
+        if DataBuf.flag[0] == 0:
             print 'close car analysis'
             return
         # print 'car_analysis'
-        while not car_queue.empty():
-            if ar[0] == 0:
-                print 'close car analysis'
-                return
+        while not DataBuf.car.empty():
             # print 'car_analysis'
-            temp = car_queue.get()
+            temp = DataBuf.car.get()
             print 'car info', temp
             info_list = temp['info_list']
             lane_id = temp['id']
-            info_len = len(info_list)
-            average_height = 0
-            max_height = 0
-            for height in info_list:
-                average_height += height
-                max_height = max(max_height, height)
-            average_height /= info_len
-
-            average_q = 0
-            for height in info_list:
-                average_q += (height-average_height)*(height-average_height)
-            average_q = int(math.sqrt(average_q))
-
-            '''
-            print'average_height', average_height
-            print'average_q', average_q
-            print'analysis_list', info_list
-            print'revolution', info_len
-            print'lane id', lane_id
-            '''
             car_res = {
-                'info_list': info_list,
-                'width_list': temp['width_list'],
-                'average_height': average_height,
-                'revolution': info_len,
                 'lane_id': lane_id,
-                'max_height': max_height,
-                'average_q': average_q
+                'height_list': info_list,
+                'width_list': temp['width_list']
             }
-            res_mode = analysis_model(car_res)
-            car_res['type'] = res_mode
+            car_type = use_model(car_res)
+            car_res['type'] = car_type
             if cv2:
                 cv_draw(info_list)
             print 'car_res', car_res
-            car_file.write_json(car_res, res_queue)
+            car_file.record(car_res)
             # web_car_queue.put(car_res)
         time.sleep(0.1)
 
-def analysis_model(car_res):
+def use_model(car_res):
+    return 0
+
+'''
+def use_model(car_res):
     car_model = [
         {
             'name': 'car', # 小客
@@ -150,3 +187,4 @@ def analysis_model(car_res):
             else:
                 return key
     return 0
+'''

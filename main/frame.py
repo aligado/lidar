@@ -3,17 +3,16 @@
 # Author: alpc32
 # Date: 2017-09-12 22:29:40
 # Last Modified by:   alpc32
-# Last Modified time: 2018年 2月16日 星期五 16时23分27秒 CST
-
-
+# Last Modified time: Wed Jun  6 23:05:28 CST 2018
+ 
 import time
 import math
-# from file_handle import FileHandle
-from mtools import hexstr2int, AllConfig
+from util import DataBuf, hexstr2int, AllConfig
 try:
     import cv2
     import numpy as np
 except Exception as identifier:
+    cv2 = None
     print('arm platform')
 
 PI = math.pi
@@ -26,20 +25,16 @@ class CarInfo(object):
     frameinfo object
     收集车道上经过每辆车雷达点阵信息
     """
-    # threshold_height = 32  # 高度阈值
-    # threshold_num = 2  # 连续点阈值
 
     def __init__(self, id):
-        self.info_list = []  # 车辆波形数组
+        self.height_list = []  # 车辆波形数组
         self.width_list = []  # 车辆波形数组
         self.horizon_line = 0  # 车道水平线,修正高度
         self.under_cnt = 0  # 连续空白无车辆计数
         self.id = id  # 车道id
         self.threshold_num = AllConfig.threshold_num  # 连续点阈值
         self.threshold_height = AllConfig.threshold_height  # 高度阈值
-        print 'threshold', self.threshold_num, self.threshold_height
-        # print AllConfig.threshold_height
-        # print AllConfig.threshold_num
+        # print 'threshold', self.threshold_num, self.threshold_height
 
     def insert_frame_info(self, height, width=0):
         """
@@ -51,14 +46,10 @@ class CarInfo(object):
         height = self.horizon_line - height
         if height < 0:
             height = 0
-        # print 'horizon_line', self.horizon_line, height, self.id
-        self.info_list.append(height)
+
+        self.height_list.append(height)
         self.width_list.append(width)
 
-        '''
-        print('insert', height)
-        print('insert', self.info_list)
-        '''
         # print(height)
         # 如果扫描点连续threshold_num个低于threshold_height
         # 则断开info_list为一个车辆的数据
@@ -66,13 +57,11 @@ class CarInfo(object):
             self.under_cnt += 1
             if self.under_cnt >= self.threshold_num:
                 res = self.car_analysis()
-                self.info_list = []
+                self.height_list = []
                 self.width_list = []
                 self.under_cnt = 0
-                return res
         else:
             self.under_cnt = 0
-        return 'null'
 
     def car_analysis(self):
         """
@@ -80,7 +69,7 @@ class CarInfo(object):
         一个车辆完整的高度轮廓
         """
         # print('id info_list', self.id, info_list)
-        info_list = self.info_list
+        info_list = self.height_list
         info_len = len(info_list)
         begin = 0
         end = info_len - self.threshold_num
@@ -88,19 +77,17 @@ class CarInfo(object):
             begin += 1
         # print('begin end', begin, end)
         if begin+self.threshold_num < end:
-            info_list = info_list[begin:end]
+            height_list = self.height_list[begin:end]
             width_list = self.width_list[begin:end]
             
             # info_len = len(info_list)
-            if len(info_list) > 6:
-                return {
+            if len(height_list) > 4:
+                print 'car height list:', height_list
+                DataBuf.car.put({
                     'id': self.id,
-                    'info_list': info_list,
+                    'info_list': height_list,
                     'width_list': width_list
-                }
-        return 'null'
-
-
+                })
 
 def get_frame_info(buf, car_info):
 
@@ -114,12 +101,12 @@ def get_frame_info(buf, car_info):
         # print('frame_draw')
         image_content[0:0+5, 640:640+2] = (0, 255, 255)
 
-        for index, h in enumerate(AllConfig.lane_horizon):
-            lane_min = AllConfig.lane_min[index] + 2000
-            lane_max = AllConfig.lane_max[index] + 2000
+        for index, h in enumerate(AllConfig.lane):
+            lane_min = AllConfig.lane[index][0] + 2000
+            lane_max = AllConfig.lane[index][1] + 2000
             x1 = 1280*lane_min/4000
             x2 = 1280*lane_max/4000
-            y = 400*(AllConfig.lane_horizon[index])/1000
+            y = 400*(AllConfig.lane[index][2])/1000
             image_content[y-10:y+10, x1-1:x1+1] = (255, 255, 0)
             image_content[y-10:y+10, x2-1:x2+1] = (255, 255, 0)
             image_content[y:y+1, x1:x2+1] = (255, 255, 0)
@@ -178,82 +165,72 @@ def get_frame_info(buf, car_info):
     buf_len = len(buf)
 
     if buf_len < 26:
-        return [], [], [], []
+        return
 
     # 雷达扫描点数
     num_len = hex2int(buf[25])
-    # print('len ', num_len)
     end = min(26+num_len, buf_len)
-    height = [AllConfig.unuse_height]*6
-    width = [0]*6
+
+    lane_num = len(AllConfig.lane)
+    height = [6666]*lane_num
+    width = [0]*lane_num
+    x_range = [[], [], [], [], [], []]
 
     lidar_fix_angle = AllConfig.lidar_fix_angle
-    lidar_fix_angle = 0
-    x_range = [[], [], [], [], [], []]
+
+    MINI_Y = 30
+    CAR_H = 150
+    CAR_RANGE_H = 20
+    
     for i in range(26, end):
         angle = ((i - 26 + lidar_fix_angle) * 0.5 + 0) * PI / 180.0
         vle = hex2int(buf[i]) / 10.0
 
-        # if vle < 100:
-        #     vle = 0
-
         temp_x = math.cos(angle) * vle
         temp_y = math.sin(angle) * vle
-        '''
-        if temp_x < -2000:
-            temp_x = -2000
-        elif temp_x > 2000:
-            temp_x = 2000
-        temp_x = int(temp_x)
-        if temp_y < 0:
-            temp_y = 0
-        elif temp_y > 1000:
-            temp_y = 1000
-        '''
+
         temp_y = int(temp_y)
         temp_x = int(temp_x)
 
         # 添加二维点
         xdata.append(temp_x)
         ydata.append(temp_y)
-
         
         # 遍历6个车道，找到每个车道最高点
-        for lane_index in range(0, 6):
-            if temp_x >= AllConfig.lane_min[lane_index] and temp_x <= AllConfig.lane_max[lane_index]:
-                if temp_y > 50:
-                # if temp_y < height[lane_index]:
-                    # print 'temp_y', temp_y
-                    if AllConfig.lane_horizon[lane_index] - temp_y > 150:
-                        # print('over', temp_x, temp_y)
-                        if temp_x in HIGHT_TABLE:
-                            HIGHT_TABLE[temp_x] += 1
-                        else:
-                            HIGHT_TABLE[temp_x] = 1
-                    if AllConfig.lane_horizon[lane_index] - temp_y > 20:
+        for lane_index in range(0, lane_num):
+            [minx, maxx, horizon] = AllConfig.lane[lane_index]
+            if (temp_x >= AllConfig.lane[lane_index][0] and
+                temp_x <= AllConfig.lane[lane_index][1]):
+                if temp_y > MINI_Y:
+
+                    if cv2:
+                        if AllConfig.lane[lane_index][2] - temp_y > CAR_H:
+                            if temp_x in HIGHT_TABLE:
+                                HIGHT_TABLE[temp_x] += 1
+                            else:
+                                HIGHT_TABLE[temp_x] = 1
+
+                    if AllConfig.lane[lane_index][2] - temp_y > CAR_RANGE_H:
                         x_range[lane_index].append(temp_x)
-                if temp_y > 50 and temp_y < height[lane_index]:
-                # if temp_y < height[lane_index]:
-                    # print 'temp_y', temp_y
-                    height[lane_index] = temp_y
+
+                    if temp_y < height[lane_index]:
+                        height[lane_index] = temp_y
 
     if cv2:
         cv_draw(xdata, ydata)
-    for lane_index in range(0, 6):
+
+    for lane_index in range(0, lane_num):
         if x_range[lane_index]:
             x_range[lane_index].sort()
-            # print x_range[lane_index]
             width[lane_index] = x_range[lane_index][-1] - x_range[lane_index][0]
         else:
             width[lane_index] = 0
 
-    analysis_list = ['null']*6
     for lane_index in range(0, 6):
-        analysis_list[lane_index] = car_info[lane_index].insert_frame_info(height[lane_index], width[lane_index])
-    return xdata, ydata, height, analysis_list
+        car_info[lane_index].insert_frame_info(height[lane_index],
+                                               width[lane_index])
 
-
-def read_frame(ar, queue, car_queue):
+def frame_handle():
     """
     读取处理每一帧雷达原始数据的信息
     @ar [0]进程正常运行标志
@@ -262,36 +239,26 @@ def read_frame(ar, queue, car_queue):
     @car_queue 雷达扫描到的车辆高度图像信息
     """
 
-    print 'read_frame process AllConfig.__dict__: ', AllConfig.__dict__
-
     # 各车道车辆信息实例初始化
-    car_info = [None]*6  # need update
-    for index in range(0, 6):
-        car_info[index] = CarInfo(index)
-    # 赋值各车道修正高度
+    lane_num = len(AllConfig.lane)
+    car_info = []
+    for index in range(0, lane_num):
+        car_info.append(CarInfo(index))
+        # 赋值各车道修正高度
+        car_info[index].horizon_line = AllConfig.lane[index][2]
 
-    car_info[0].horizon_line = AllConfig.lane_horizon[0]
-    car_info[1].horizon_line = AllConfig.lane_horizon[1]
-    car_info[2].horizon_line = AllConfig.lane_horizon[2]
-    car_info[3].horizon_line = AllConfig.lane_horizon[3]
-    car_info[4].horizon_line = AllConfig.lane_horizon[4]
-    car_info[5].horizon_line = AllConfig.lane_horizon[5]
-    # for debug
-    print 'car_info0.horizon_line', car_info[0].horizon_line
+    # print 'car_info0.horizon_line', car_info[0].horizon_line
 
-    # frame_cnt = 0
     begin_flag = 'sSN'  # frame begin flag
     end_flag = '0'  # frame end flag
-
     while True:
-        if ar[0] == 0:  # 关闭雷达侦处理进程
-            print 'read_frame close'
-            return
 
+        queue = DataBuf.frame
         while not queue.empty():
-            if ar[0] == 0:  # 关闭雷达侦处理进程
-                print 'read_frame close'
+            if DataBuf.flag[0] == 0:  # 关闭雷达侦处理进程
+                print 'frame handle process close'
                 return
+            
 
             # 必须至少要有两侦的数据才去处理
             # 解决侦不全的情况
@@ -316,20 +283,16 @@ def read_frame(ar, queue, car_queue):
             # print buf_split
 
             # 将侦数据交由下一层函数处理
+            get_frame_info(buf_split, car_info)
+            '''
             xdata, ydata, height, analysis_data = get_frame_info(buf_split, car_info)
-            '''
-            for i in range(0, len(xdata)):
-                print xdata[i], ydata[i]
-            print ''
-            print height
-            '''
             for temp in analysis_data:
                 if temp != 'null':
                     car_queue.put(temp)
+            '''
 
         time.sleep(0.1)
-
-
+    
 def unittest(args):
     """
     单元测试

@@ -75,8 +75,6 @@ def add_data(path):
                 writer.writeheader()
                 writer.writerows(content)
 
-            
-
 def cli(argv):
     """
     """

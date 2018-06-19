@@ -10,14 +10,14 @@ import socket
 import binascii
 import time
 
-from mtools import AllConfig
+from util import AllConfig, DataBuf
 
 def ten2hex(num, hex_len = None):
     res = ""
     while num:
         temp = num % 256
         temp = hex(temp)[2:]
-        while len(temp)<2:
+        while len(temp) < 2:
             temp = "0" + temp
         res += temp
         num //= 256
@@ -31,26 +31,24 @@ convert = binascii.b2a_hex
 
 class CarData(object):
     def __init__(self):
-        self.device_id = AllConfig.device_id # '0011110206090001'
-        # self.device_id = "0021140306120001" # '0011110206090001'
-        # self.device_id = '0011110206090001'
-        self.station_number = AllConfig.station_number # 'G102L206120225'
+        self.device_id = AllConfig.device_id  # '0011110206090001'
+        # self.device_id = "0021140306120001"  # '0011110206090001'
+        self.station_number = AllConfig.station_number  # 'G102L206120225'
         # self.station_number = "S227J205320584" # 'G102L206120225'
-        # self.station_number = 'S216L257110229'
         self.now_mess = [
-            "AAAA", #0 前缀 
-            "EA00", #1 包长度
-            "01", #2 包类型
-            "", #3 设备ID 0011110206090001
-            "", #4 站点号
-            "00", #5 设备硬件错误码
-            "01", #6 调查内容，调查所有项目
-            "E207", #7 年份
-            "03", #8 月份
-            "19", #9 日期
-            "05", #10 交通数据处理周期
-            "7100", #11 时间序号
-            "06", #12 车道数
+            "AAAA",  # 0 前缀
+            "EA00",  # 1 包长度
+            "01",  # 2 包类型
+            "",  # 3 设备ID 0011110206090001
+            "",  # 4 站点号
+            "00",  # 5 设备硬件错误码
+            "01",  # 6 调查内容，调查所有项目
+            "E207",  # 7 年份
+            "03",  # 8 月份
+            "19",  # 9 日期
+            "05",  # 10 交通数据处理周期
+            "7100",  # 11 时间序号
+            "06",  # 12 车道数
             "0B00000000000000000000000000000000000000000000000000000000000000", # 13
             "0C00000000000000000000000000000000000000000000000000000000000000", # 14
             "0D00000000000000000000000000000000000000000000000000000000000000", # 15
@@ -63,7 +61,7 @@ class CarData(object):
         self.now_mess[3] = convert(self.device_id)
         print 'device_id', self.now_mess[3]
         self.now_mess[4] = convert(self.station_number)
-        while len(self.now_mess[4])<30:
+        while len(self.now_mess[4]) < 30:
             self.now_mess[4] += '00'
 
     def pack_message(self, mess):
@@ -82,12 +80,14 @@ class CarData(object):
         print 'periods', self.now_mess[11]
         for index, car_mess in enumerate(mess['car']):
             print index, car_mess
-            car_num_list = car_mess['total']
+            num_list = car_mess['num']
+            spd_list = car_mess['spd']
             temp = self.now_mess[13+index]
             self.now_mess[13+index] = temp[0:10]
-            for j, car_num in enumerate(car_num_list):
-                # self.now_mess[13+index] = temp[0:10] + ten2hex(car_num, 4) + temp[14:]
-                self.now_mess[13+index] += ten2hex(car_num, 4) + '00'
+            for j, num in enumerate(num_list):
+                # self.now_mess[13+index] += ten2hex(car_num, 4) + '00'
+                spd = spd_list[j]
+                self.now_mess[13+index] += ten2hex(num, 4) + ten2hex(spd, 2)
         return ''.join(self.now_mess)
 
 
@@ -101,13 +101,13 @@ class CarData(object):
     def tcp_client(self, buf):
         pass
 
-def msg_server(ar, res_queue):
+def msg_server():
     while True:
-        if ar[0] == 0:
+        if DataBuf.flag[0] == 0:
             print "get exit cmd"
             return
-        while not res_queue.empty():
-            car_mess = res_queue.get()
+        while not DataBuf.res.empty():
+            car_mess = DataBuf.res.get()
             send_msg(car_mess)
         time.sleep(10)
 
@@ -175,75 +175,8 @@ def send_msg(car_mess):
             time.sleep(5)
     # print cardata.template[0:2].decode('hex')
 
-def test(argv):
-    print 'test'
-    cardata = CarData()
-    # print cardata.template[0:2].decode('hex')
-
-def test2(argv):
-    cardata = CarData()
-    mess = {
-        'year': 2018,
-        'month': 4,
-        'day': 11,
-        'hour': 8,
-        'minute': 6,
-        'car': [
-            {
-                'total': 1
-            },
-            {
-                'total': 2
-            },
-            {
-                'total': 3
-            },
-            {
-                'total': 3
-            },
-            {
-                'total': 2
-            },
-            {
-                'total': 1
-            },
-        ]
-    }
-    temp =  cardata.pack_message(mess)
-    print temp, len(temp) 
-    print cardata.template, len(cardata.template) 
-    try:
-        s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-
-        s.connect(('121.52.216.242', 3132))
-        # temp = cardata.template
-        s.send(temp.decode('hex'))
-        data = s.recv(1024)
-        print data.encode('hex')
-        s.close()
-    except expression as identifier:
-        print 'Error'
-    # print cardata.template[0:2].decode('hex')
-
-def test1(argv):
-    print 'test'
-    cardata = CarData()
-    print cardata.__dict__
-    res = cardata.hex()
-    print res
-    length = 0
-    for item in cardata.__dict__:
-        print item
-        length += len(cardata.__dict__[item])
-    # print(length + ((6+8)*9+6+4)*3+8*9)
-    print(length + (6*9+6+4)*5)
-    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    s.connect(('121.52.216.242', 3132))
-    s.send(res)
-    data = s.recv(1024)
-    print data.encode('hex')
 
 if __name__ == '__main__':
     import sys
-    # sys.exit(test(sys.argv))
-    sys.exit(test2(sys.argv))
+    # sys.exit(test2(sys.argv))
+    pass

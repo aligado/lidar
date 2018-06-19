@@ -6,55 +6,40 @@ import gzip
 import functools
 import time
 from lidar import LidarHandle
-from mtools import hexstr2int, queue, AllConfig
+from util import AllConfig, DataBuf
 from multiprocessing import Process, Array, Value, Queue
-from frame import read_frame
+from frame import frame_handle
 from analysis import car_analysis
 from proxy import msg_server
 
 class Handle(object):
     lidar = None
-    scan_flag = Array('i', 5)
-    scandata1_process = None
-    read_process = None
-    car_process = None
-    frame_queue = queue
-    car_queue = Queue()
-    res_queue = Queue()
 
     @classmethod
     def create_scan_process(cls):
-        cls.scan_flag[0] = 1
-
         cls.scandata1_process = Process(target=cls.lidar.open_scandata1,
-                                        args=(cls.scan_flag, ))
-
+                                        args=())
         cls.scandata1_process.daemon = True
         cls.scandata1_process.start()
 
     @classmethod
     def create_read_process(cls):
-        cls.read_process = Process(target=read_frame,
-                                   args=(cls.scan_flag,
-                                         cls.frame_queue,
-                                         cls.car_queue))
+        cls.read_process = Process(target=frame_handle,
+                                   args=())
         cls.read_process.daemon = True
         cls.read_process.start()
 
     @classmethod
     def create_analysis_process(cls):
         cls.car_process = Process(target=car_analysis,
-                                  args=(cls.scan_flag,
-                                        cls.car_queue,
-                                        cls.res_queue))
+                                  args=())
         cls.car_process.daemon = True
         cls.car_process.start()
 
     @classmethod
     def create_proxy_process(cls):
         cls.proxy_process = Process(target=msg_server,
-                                    args=(cls.scan_flag,
-                                          cls.res_queue))
+                                    args=())
         cls.proxy_process.daemon = True
         cls.proxy_process.start()
 
@@ -65,7 +50,7 @@ class Handle(object):
 
     @classmethod
     def close_scan_process(cls):
-        cls.lidar.close_scandata1(cls.scan_flag)
+        cls.lidar.close_scandata1()
         cls.lidar.close()
         time.sleep(2)
 
@@ -82,6 +67,7 @@ def system_poweron():
     初始化
     启动雷达程序
     """
+    DataBuf.flag[0] = 1
     AllConfig.read_config_file()
     Handle.connect()
     Handle.create_scan_process()
@@ -92,13 +78,12 @@ def system_poweron():
     print 'create_analysis_process'
     Handle.create_proxy_process()
     print 'create_proxy_process'
-    '''
-    while not Handle.frame_queue.empty():
-        print Handle.frame_queue.get()
-        print ""
-    '''
 
 if __name__ == '__main__':
     system_poweron()
+    time.sleep(6000)
+    system_shutdown()
+    '''
     while True:
-        time.sleep(10)
+        time.sleep(60)
+    '''
